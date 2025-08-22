@@ -1,0 +1,77 @@
+import { UserService } from '../services/user.service';
+import { CreateUserDto } from '../dtos/create-user.dto';
+import { UpdateUserDto } from '../dtos/update-user.dto';
+import { AssignProjectDto } from '../dtos/assign-project.dto';
+import { AssignTeamDto } from '../dtos/assign-team.dto';
+import { AssignRoleDto } from '../dtos/assign-role.dto';
+export declare class UserController {
+    private readonly userService;
+    constructor(userService: UserService);
+    create(createUserDto: CreateUserDto): Promise<{
+        id: string;
+        isActive: boolean | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        phone: string | null;
+        department: string | null;
+        position: string | null;
+        employeeId: string | null;
+        lastLoginAt: Date | null;
+    }>;
+    findAll(): Promise<{
+        id: string;
+        isActive: boolean | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        phone: string | null;
+        department: string | null;
+        position: string | null;
+        employeeId: string | null;
+        lastLoginAt: Date | null;
+    }[]>;
+    findOne(id: string): Promise<{
+        id: string;
+        isActive: boolean | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        phone: string | null;
+        department: string | null;
+        position: string | null;
+        employeeId: string | null;
+        lastLoginAt: Date | null;
+    }>;
+    update(id: string, updateUserDto: UpdateUserDto): Promise<{
+        id: string;
+        isActive: boolean | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+        phone: string | null;
+        department: string | null;
+        position: string | null;
+        employeeId: string | null;
+        lastLoginAt: Date | null;
+    }>;
+    remove(id: string): Promise<void>;
+    assignToProject(id: string, assignProjectDto: AssignProjectDto): Promise<void>;
+    assignToTeam(id: string, assignTeamDto: AssignTeamDto): Promise<void>;
+    assignRole(id: string, assignRoleDto: AssignRoleDto): Promise<void>;
+    getUserProjects(id: string): Promise<any>;
+    getUserTeams(id: string): Promise<any>;
+    getUserRoles(id: string): Promise<any>;
+}
