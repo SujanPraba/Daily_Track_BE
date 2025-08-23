@@ -21,6 +21,7 @@ const project_module_1 = require("./lib/project/project.module");
 const team_module_1 = require("./lib/team/team.module");
 const user_module_1 = require("./lib/user/user.module");
 const daily_update_module_1 = require("./lib/daily-update/daily-update.module");
+const module_module_1 = require("./lib/module/module.module");
 const migration_service_1 = require("./database/migration.service");
 let AppModule = class AppModule {
     constructor(migrationService) {
@@ -50,6 +51,7 @@ exports.AppModule = AppModule = __decorate([
             team_module_1.TeamModule,
             user_module_1.UserModule,
             daily_update_module_1.DailyUpdateModule,
+            module_module_1.ModuleModule,
         ],
         providers: [migration_service_1.MigrationService],
     }),

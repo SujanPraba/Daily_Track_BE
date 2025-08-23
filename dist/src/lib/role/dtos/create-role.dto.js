@@ -40,4 +40,15 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateRoleDto.prototype, "isActive", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['2ccfdca6-0daa-4ef5-a7a4-5364011cbbff'],
+        description: 'Array of permission IDs to assign to the role',
+        required: false
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsUUID)('4', { each: true }),
+    __metadata("design:type", Array)
+], CreateRoleDto.prototype, "permissionIds", void 0);
 //# sourceMappingURL=create-role.dto.js.map

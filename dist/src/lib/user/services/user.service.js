@@ -22,15 +22,26 @@ let UserService = class UserService {
         if (existingUser) {
             throw new common_1.BadRequestException('User with this email already exists');
         }
-        const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
-        const userData = {
-            ...createUserDto,
+        const { projectRoleAssignments, teamId, ...userData } = createUserDto;
+        const hashedPassword = await bcrypt.hash(userData.password, 12);
+        const userToCreate = {
+            ...userData,
             password: hashedPassword,
         };
-        return this.userRepository.create(userData);
+        const createdUser = await this.userRepository.create(userToCreate);
+        if (projectRoleAssignments && projectRoleAssignments.length > 0) {
+            await this.userRepository.assignProjectRoles(createdUser.id, projectRoleAssignments);
+        }
+        if (teamId && (!projectRoleAssignments || projectRoleAssignments.length === 0)) {
+            await this.userRepository.assignTeam(createdUser.id, teamId);
+        }
+        return createdUser;
     }
     async findAll() {
         return this.userRepository.findAll();
+    }
+    async searchUsers(searchDto) {
+        return this.userRepository.searchUsers(searchDto);
     }
     async findOne(id) {
         const user = await this.userRepository.findById(id);
@@ -42,37 +53,54 @@ let UserService = class UserService {
     async findByEmail(email) {
         return this.userRepository.findByEmail(email);
     }
+    async findByEmailForAuth(email) {
+        const result = await this.userRepository.findByEmailRaw(email);
+        return result;
+    }
+    async findUserWithCompleteInformation(userId) {
+        return this.userRepository.findUserWithCompleteInformation(userId);
+    }
     async update(id, updateUserDto) {
         const user = await this.findOne(id);
         if (updateUserDto.password) {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
         }
-        return this.userRepository.update(id, updateUserDto);
+        const { projectRoleAssignments, teamId, ...userData } = updateUserDto;
+        const updatedUser = await this.userRepository.update(id, userData);
+        if (projectRoleAssignments !== undefined) {
+            await this.userRepository.assignProjectRoles(id, projectRoleAssignments);
+        }
+        if (teamId !== undefined && projectRoleAssignments === undefined) {
+            await this.userRepository.assignTeam(id, teamId);
+        }
+        return updatedUser;
     }
     async remove(id) {
         const user = await this.findOne(id);
         await this.userRepository.delete(id);
     }
-    async assignToProject(userId, projectId) {
+    async assignProjectRoles(userId, projectRoleAssignments) {
         const user = await this.findOne(userId);
-        await this.userRepository.assignToProject(userId, projectId);
+        await this.userRepository.assignProjectRoles(userId, projectRoleAssignments);
     }
-    async assignToTeam(userId, teamId) {
+    async assignTeam(userId, teamId) {
         const user = await this.findOne(userId);
-        await this.userRepository.assignToTeam(userId, teamId);
+        await this.userRepository.assignTeam(userId, teamId);
     }
-    async assignRole(userId, roleId) {
-        const user = await this.findOne(userId);
-        await this.userRepository.assignRole(userId, roleId);
-    }
-    async getUserProjects(userId) {
-        return this.userRepository.getUserProjects(userId);
+    async getUserProjectRoles(userId) {
+        return this.userRepository.getUserProjectRoles(userId);
     }
     async getUserTeams(userId) {
         return this.userRepository.getUserTeams(userId);
     }
     async getUserRoles(userId) {
         return this.userRepository.getUserRoles(userId);
+    }
+    async hasPermission(userId, permissionName) {
+        return this.userRepository.hasPermission(userId, permissionName);
+    }
+    async getUserProjectIds(userId) {
+        return this.userRepository.getUserProjectIds(userId);
     }
 };
 exports.UserService = UserService;

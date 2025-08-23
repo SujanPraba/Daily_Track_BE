@@ -18,10 +18,13 @@ const swagger_1 = require("@nestjs/swagger");
 const user_service_1 = require("../services/user.service");
 const create_user_dto_1 = require("../dtos/create-user.dto");
 const update_user_dto_1 = require("../dtos/update-user.dto");
-const assign_project_dto_1 = require("../dtos/assign-project.dto");
+const assign_project_roles_dto_1 = require("../dtos/assign-project-roles.dto");
 const assign_team_dto_1 = require("../dtos/assign-team.dto");
-const assign_role_dto_1 = require("../dtos/assign-role.dto");
+const user_project_role_response_dto_1 = require("../dtos/user-project-role-response.dto");
+const search_users_dto_1 = require("../dtos/search-users.dto");
+const paginated_users_dto_1 = require("../dtos/paginated-users.dto");
 const jwt_auth_guard_1 = require("../../auth/guards/jwt-auth.guard");
+const user_all_information_dto_1 = require("../dtos/user-all-information.dto");
 let UserController = class UserController {
     constructor(userService) {
         this.userService = userService;
@@ -32,6 +35,12 @@ let UserController = class UserController {
     findAll() {
         return this.userService.findAll();
     }
+    findUserWithCompleteInformation(id) {
+        return this.userService.findUserWithCompleteInformation(id);
+    }
+    searchUsers(searchDto) {
+        return this.userService.searchUsers(searchDto);
+    }
     findOne(id) {
         return this.userService.findOne(id);
     }
@@ -41,17 +50,14 @@ let UserController = class UserController {
     remove(id) {
         return this.userService.remove(id);
     }
-    assignToProject(id, assignProjectDto) {
-        return this.userService.assignToProject(id, assignProjectDto.projectId);
+    assignProjectRoles(id, assignProjectRolesDto) {
+        return this.userService.assignProjectRoles(id, assignProjectRolesDto.projectRoleAssignments);
     }
-    assignToTeam(id, assignTeamDto) {
-        return this.userService.assignToTeam(id, assignTeamDto.teamId);
+    assignTeam(id, assignTeamDto) {
+        return this.userService.assignTeam(id, assignTeamDto.teamId);
     }
-    assignRole(id, assignRoleDto) {
-        return this.userService.assignRole(id, assignRoleDto.roleId);
-    }
-    getUserProjects(id) {
-        return this.userService.getUserProjects(id);
+    getUserProjectRoles(id) {
+        return this.userService.getUserProjectRoles(id);
     }
     getUserTeams(id) {
         return this.userService.getUserTeams(id);
@@ -62,7 +68,10 @@ let UserController = class UserController {
 };
 exports.UserController = UserController;
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new user' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Create a new user',
+        description: 'Create a new user with optional project-role assignments and team assignment'
+    }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'User created successfully' }),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -71,13 +80,40 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "create", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get all users' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all users (without pagination)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'List of all users' }),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "findAll", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Get user with complete information by ID (projects with teams, roles, and Daily Updates permissions)' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'User with complete information including projects (teams, roles with Daily Updates permissions) and common permissions',
+        type: user_all_information_dto_1.UserAllInformationDto
+    }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'User not found' }),
+    (0, common_1.Get)(':id/complete-information'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UserController.prototype, "findUserWithCompleteInformation", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Search and get all users with pagination and filtering' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Paginated list of users',
+        type: paginated_users_dto_1.PaginatedUsersDto
+    }),
+    (0, common_1.Post)('search'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [search_users_dto_1.SearchUsersDto]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "searchUsers", null);
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get user by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'User found' }),
@@ -108,44 +144,38 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "remove", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Assign user to project' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'User assigned to project successfully' }),
-    (0, common_1.Post)(':id/projects'),
+    (0, swagger_1.ApiOperation)({ summary: 'Assign project roles to user' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Project roles assigned successfully' }),
+    (0, common_1.Post)(':id/project-roles'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, assign_project_dto_1.AssignProjectDto]),
+    __metadata("design:paramtypes", [String, assign_project_roles_dto_1.AssignProjectRolesDto]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "assignToProject", null);
+], UserController.prototype, "assignProjectRoles", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Assign user to team' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'User assigned to team successfully' }),
-    (0, common_1.Post)(':id/teams'),
+    (0, swagger_1.ApiOperation)({ summary: 'Assign team to user' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Team assigned successfully' }),
+    (0, common_1.Post)(':id/team'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, assign_team_dto_1.AssignTeamDto]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "assignToTeam", null);
+], UserController.prototype, "assignTeam", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Assign role to user' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Role assigned to user successfully' }),
-    (0, common_1.Post)(':id/roles'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, assign_role_dto_1.AssignRoleDto]),
-    __metadata("design:returntype", void 0)
-], UserController.prototype, "assignRole", null);
-__decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get user projects' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'User projects retrieved' }),
-    (0, common_1.Get)(':id/projects'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user project roles' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'User project roles retrieved with team information',
+        type: [user_project_role_response_dto_1.UserProjectRoleResponseDto]
+    }),
+    (0, common_1.Get)(':id/project-roles'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "getUserProjects", null);
+], UserController.prototype, "getUserProjectRoles", null);
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get user teams' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'User teams retrieved' }),

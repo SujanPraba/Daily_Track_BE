@@ -13,18 +13,79 @@ async function seed() {
   console.log('🌱 Starting database seeding...');
 
   try {
-    // Create permissions
+    // Clear existing data to avoid conflicts
+    console.log('🧹 Clearing existing data...');
+    await db.delete(schemas.userProjects);
+    await db.delete(schemas.userTeams);
+    await db.delete(schemas.userRoles);
+    await db.delete(schemas.rolePermissions);
+    await db.delete(schemas.permissions);
+    await db.delete(schemas.roles);
+    await db.delete(schemas.teams);
+    await db.delete(schemas.projects);
+    await db.delete(schemas.users);
+    await db.delete(schemas.modules);
+    console.log('✅ Existing data cleared');
+    // Create modules first
+    const modulesData = [
+      { name: 'Dashboard', description: 'Dashboard operations', code: 'DASHBOARD' },
+      { name: 'Reports', description: 'Reports operations', code: 'REPORTS' },
+      { name: 'Configuration', description: 'Configuration management operations', code: 'CONFIGURATION' },
+      { name: 'Daily Updates', description: 'Daily update operations', code: 'DAILY_UPDATE' },
+      { name: 'Module Management', description: 'Module management operations', code: 'MODULE_MANAGEMENT' },
+      { name: 'Permission Management', description: 'Permission management operations', code: 'PERMISSION_MANAGEMENT' },
+      { name: 'Role Management', description: 'Role management operations', code: 'ROLE_MANAGEMENT' },
+      { name: 'Project Management', description: 'Project management operations', code: 'PROJECT' },
+      { name: 'Team Management', description: 'Team management operations', code: 'TEAM' },
+      { name: 'User Management', description: 'User management operations', code: 'USER' },
+    ];
+
+    const createdModules = await db.insert(schemas.modules).values(modulesData).returning();
+    console.log('✅ Modules created');
+
+    // Create permissions with moduleId references
     const permissionsData = [
-      { name: 'CREATE_USER', description: 'Create new users', module: 'USER', action: 'CREATE' },
-      { name: 'READ_USER', description: 'Read user data', module: 'USER', action: 'READ' },
-      { name: 'UPDATE_USER', description: 'Update user data', module: 'USER', action: 'UPDATE' },
-      { name: 'DELETE_USER', description: 'Delete users', module: 'USER', action: 'DELETE' },
-      { name: 'CREATE_PROJECT', description: 'Create new projects', module: 'PROJECT', action: 'CREATE' },
-      { name: 'READ_PROJECT', description: 'Read project data', module: 'PROJECT', action: 'READ' },
-      { name: 'UPDATE_PROJECT', description: 'Update project data', module: 'PROJECT', action: 'UPDATE' },
-      { name: 'DELETE_PROJECT', description: 'Delete projects', module: 'PROJECT', action: 'DELETE' },
-      { name: 'MANAGE_TEAM', description: 'Manage teams', module: 'TEAM', action: 'MANAGE' },
-      { name: 'APPROVE_UPDATES', description: 'Approve daily updates', module: 'DAILY_UPDATE', action: 'APPROVE' },
+      { name: 'VIEW_DASHBOARD', description: 'View dashboard', moduleId: createdModules.find(m => m.code === 'DASHBOARD')!.id },
+      { name: 'VIEW_REPORTS', description: 'View reports', moduleId: createdModules.find(m => m.code === 'REPORTS')!.id },
+      { name: 'VIEW_CONFIGURATION', description: 'View configuration', moduleId: createdModules.find(m => m.code === 'CONFIGURATION')!.id },
+      // User Management
+      { name: 'VIEW_USER_MANAGEMENT', description: 'View user management', moduleId: createdModules.find(m => m.code === 'USER')!.id },
+      { name: 'CREATE_USER', description: 'Create new users', moduleId: createdModules.find(m => m.code === 'USER')!.id },
+      { name: 'UPDATE_USER', description: 'Update user data', moduleId: createdModules.find(m => m.code === 'USER')!.id },
+      { name: 'DELETE_USER', description: 'Delete users', moduleId: createdModules.find(m => m.code === 'USER')!.id },
+      // Project Management
+      { name: 'VIEW_PROJECT_MANAGEMENT', description: 'View project management', moduleId: createdModules.find(m => m.code === 'PROJECT')!.id },
+      { name: 'CREATE_PROJECT', description: 'Create new projects', moduleId: createdModules.find(m => m.code === 'PROJECT')!.id },
+      { name: 'UPDATE_PROJECT', description: 'Update project data', moduleId: createdModules.find(m => m.code === 'PROJECT')!.id },
+      { name: 'DELETE_PROJECT', description: 'Delete projects', moduleId: createdModules.find(m => m.code === 'PROJECT')!.id },
+      { name: 'MANAGE_TEAM', description: 'Manage teams', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
+      // Daily Updates
+      { name: 'VIEW_DAILY_UPDATES', description: 'View daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'APPROVE_UPDATES', description: 'Approve daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'VIEW_DAILY_UPDATES_FULL', description: 'View daily updates full', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'CREATE_DAILY_UPDATES', description: 'Create daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'UPDATE_DAILY_UPDATES', description: 'Update daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'DELETE_DAILY_UPDATES', description: 'Delete daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      // Module Management
+      { name: 'VIEW_MODULE_MANAGEMENT', description: 'View module management', moduleId: createdModules.find(m => m.code === 'MODULE_MANAGEMENT')!.id },
+      { name: 'CREATE_MODULE', description: 'Create new modules', moduleId: createdModules.find(m => m.code === 'MODULE_MANAGEMENT')!.id },
+      { name: 'UPDATE_MODULE', description: 'Update module data', moduleId: createdModules.find(m => m.code === 'MODULE_MANAGEMENT')!.id },
+      { name: 'DELETE_MODULE', description: 'Delete modules', moduleId: createdModules.find(m => m.code === 'MODULE_MANAGEMENT')!.id },
+      // Permission Management
+      { name: 'VIEW_PERMISSION_MANAGEMENT', description: 'View permission management', moduleId: createdModules.find(m => m.code === 'PERMISSION_MANAGEMENT')!.id },
+      { name: 'CREATE_PERMISSION', description: 'Create new permissions', moduleId: createdModules.find(m => m.code === 'PERMISSION_MANAGEMENT')!.id },
+      { name: 'UPDATE_PERMISSION', description: 'Update permission data', moduleId: createdModules.find(m => m.code === 'PERMISSION_MANAGEMENT')!.id },
+      { name: 'DELETE_PERMISSION', description: 'Delete permissions', moduleId: createdModules.find(m => m.code === 'PERMISSION_MANAGEMENT')!.id },
+      // Role Management
+      { name: 'VIEW_ROLE_MANAGEMENT', description: 'View role management', moduleId: createdModules.find(m => m.code === 'ROLE_MANAGEMENT')!.id },
+      { name: 'CREATE_ROLE', description: 'Create new roles', moduleId: createdModules.find(m => m.code === 'ROLE_MANAGEMENT')!.id },
+      { name: 'UPDATE_ROLE', description: 'Update role data', moduleId: createdModules.find(m => m.code === 'ROLE_MANAGEMENT')!.id },
+      { name: 'DELETE_ROLE', description: 'Delete roles', moduleId: createdModules.find(m => m.code === 'ROLE_MANAGEMENT')!.id },
+      // Team Management
+      { name: 'VIEW_TEAM_MANAGEMENT', description: 'View team management', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
+      { name: 'CREATE_TEAM', description: 'Create new teams', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
+      { name: 'UPDATE_TEAM', description: 'Update team data', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
+      { name: 'DELETE_TEAM', description: 'Delete teams', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
     ];
 
     const createdPermissions = await db.insert(schemas.permissions).values(permissionsData).returning();
@@ -33,9 +94,9 @@ async function seed() {
     // Create roles
     const rolesData = [
       { name: 'SUPER_ADMIN', description: 'Super administrator with full access', level: 'ADMIN' },
-      { name: 'PROJECT_MANAGER', description: 'Project manager role', level: 'MANAGER' },
-      { name: 'TEAM_LEAD', description: 'Team lead role', level: 'MANAGER' },
-      { name: 'DEVELOPER', description: 'Developer role', level: 'USER' },
+      { name: 'PROJECT MANAGER SINGLIFE', description: 'Project manager role', level: 'MANAGER' },
+      { name: 'TEAM_LEAD SINGLIFE', description: 'Team lead role', level: 'MANAGER' },
+      { name: 'DEVELOPER SINGLIFE', description: 'Developer role', level: 'USER' },
     ];
 
     const createdRoles = await db.insert(schemas.roles).values(rolesData).returning();
@@ -55,31 +116,31 @@ async function seed() {
     const hashedPassword = await bcrypt.hash('password123', 12);
     const usersData = [
       {
-        firstName: 'Super',
-        lastName: 'Admin',
-        email: 'admin@example.com',
+        firstName: 'Sujan',
+        lastName: 'Praba',
+        email: 'sujan@gmail.com',
         password: hashedPassword,
         department: 'IT',
-        position: 'System Administrator',
-        employeeId: 'EMP001',
+        position: 'Project Developer',
+        employeeId: 'PI-IT-109',
       },
       {
-        firstName: 'John',
-        lastName: 'Manager',
+        firstName: 'Manager',
+        lastName: 'User',
         email: 'manager@example.com',
         password: hashedPassword,
-        department: 'Engineering',
+        department: 'IT',
         position: 'Project Manager',
-        employeeId: 'EMP002',
+        employeeId: 'PI-IT-110',
       },
       {
-        firstName: 'Jane',
-        lastName: 'Developer',
+        firstName: 'Developer',
+        lastName: 'User',
         email: 'developer@example.com',
         password: hashedPassword,
-        department: 'Engineering',
-        position: 'Senior Developer',
-        employeeId: 'EMP003',
+        department: 'IT',
+        position: 'Developer',
+        employeeId: 'PI-IT-111',
       },
     ];
 
@@ -87,7 +148,7 @@ async function seed() {
     console.log('✅ Users created');
 
     // Assign roles to users
-    const adminUser = createdUsers.find(user => user.email === 'admin@example.com');
+    const adminUser = createdUsers.find(user => user.email === 'sujan@gmail.com');
     const managerUser = createdUsers.find(user => user.email === 'manager@example.com');
     const devUser = createdUsers.find(user => user.email === 'developer@example.com');
 
@@ -96,11 +157,11 @@ async function seed() {
       userRolesData.push({ userId: adminUser.id, roleId: superAdminRole.id });
     }
     if (managerUser) {
-      const pmRole = createdRoles.find(role => role.name === 'PROJECT_MANAGER');
+      const pmRole = createdRoles.find(role => role.name === 'PROJECT MANAGER SINGLIFE');
       if (pmRole) userRolesData.push({ userId: managerUser.id, roleId: pmRole.id });
     }
     if (devUser) {
-      const devRole = createdRoles.find(role => role.name === 'DEVELOPER');
+      const devRole = createdRoles.find(role => role.name === 'DEVELOPER SINGLIFE');
       if (devRole) userRolesData.push({ userId: devUser.id, roleId: devRole.id });
     }
 
@@ -111,23 +172,24 @@ async function seed() {
     // Create sample projects
     const projectsData = [
       {
-        name: 'E-Commerce Platform',
-        description: 'Modern e-commerce platform with microservices architecture',
-        code: 'ECOM-2024',
+        name: 'Singlife',
+        description: 'Singlife is a platform for creating and managing your own website',
+        code: 'SINGLIFE-2025',
         managerId: managerUser?.id,
         status: 'ACTIVE',
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-12-31'),
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2025-12-31'),
       },
       {
-        name: 'Mobile App Development',
-        description: 'Cross-platform mobile application',
-        code: 'MOB-2024',
+        name: 'ERL',
+        description: 'ERL is a platform for creating and managing your own website',
+        code: 'ERL-2025',
         managerId: managerUser?.id,
         status: 'ACTIVE',
-        startDate: new Date('2024-02-01'),
-        endDate: new Date('2024-08-31'),
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2025-12-31'),
       },
+
     ];
 
     const createdProjects = await db.insert(schemas.projects).values(projectsData).returning();
@@ -136,15 +198,15 @@ async function seed() {
     // Create sample teams
     const teamsData = [
       {
-        name: 'Frontend Development Team',
-        description: 'Team responsible for frontend development and UI/UX',
+        name: 'Singlife Team',
+        description: 'Team responsible for Singlife',
         projectId: createdProjects[0].id,
         leadId: devUser?.id,
       },
       {
-        name: 'Backend Development Team',
-        description: 'Team responsible for backend services and APIs',
-        projectId: createdProjects[0].id,
+        name: 'ERL Team',
+        description: 'Team responsible for ERL',
+        projectId: createdProjects[1].id,
         leadId: devUser?.id,
       },
     ];
@@ -154,10 +216,14 @@ async function seed() {
 
     // Assign users to projects and teams
     if (devUser && createdProjects.length > 0 && createdTeams.length > 0) {
-      await db.insert(schemas.userProjects).values({
-        userId: devUser.id,
-        projectId: createdProjects[0].id,
-      });
+      const devRole = createdRoles.find(role => role.name === 'DEVELOPER SINGLIFE');
+      if (devRole) {
+        await db.insert(schemas.userProjects).values({
+          userId: devUser.id,
+          projectId: createdProjects[0].id,
+          roleId: devRole.id,
+        });
+      }
 
       await db.insert(schemas.userTeams).values({
         userId: devUser.id,
@@ -165,10 +231,38 @@ async function seed() {
       });
     }
 
+    // Assign manager to projects with appropriate role
+    if (managerUser && createdProjects.length > 0) {
+      const pmRole = createdRoles.find(role => role.name === 'PROJECT MANAGER SINGLIFE');
+      if (pmRole) {
+        // Assign manager to both projects
+        for (const project of createdProjects) {
+          await db.insert(schemas.userProjects).values({
+            userId: managerUser.id,
+            projectId: project.id,
+            roleId: pmRole.id,
+          });
+        }
+      }
+    }
+
+    // Assign admin to projects with super admin role
+    if (adminUser && createdProjects.length > 0) {
+      const superAdminRole = createdRoles.find(role => role.name === 'SUPER_ADMIN');
+      if (superAdminRole) {
+        // Assign admin to first project
+        await db.insert(schemas.userProjects).values({
+          userId: adminUser.id,
+          projectId: createdProjects[0].id,
+          roleId: superAdminRole.id,
+        });
+      }
+    }
+
     console.log('🎉 Database seeding completed successfully!');
     console.log('');
     console.log('Sample credentials:');
-    console.log('Admin: admin@example.com / password123');
+    console.log('Admin: sujan@gmail.com / password123');
     console.log('Manager: manager@example.com / password123');
     console.log('Developer: developer@example.com / password123');
 

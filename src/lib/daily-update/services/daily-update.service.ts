@@ -4,6 +4,9 @@ import { UserService } from '../../user/services/user.service';
 import { ProjectService } from '../../project/services/project.service';
 import { CreateDailyUpdateDto } from '../dtos/create-daily-update.dto';
 import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
+import { SearchDailyUpdatesDto } from '../dtos/search-daily-updates.dto';
+import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
+import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
 import { DailyUpdate } from '../../../database/schemas/daily-update.schema';
 
 @Injectable()
@@ -122,6 +125,130 @@ export class DailyUpdateService {
 
   async findByStatus(status: string): Promise<DailyUpdate[]> {
     return this.dailyUpdateRepository.findByStatus(status);
+  }
+
+  async searchDailyUpdates(
+    searchDto: SearchDailyUpdatesDto,
+    currentUserId: string
+  ): Promise<PaginatedDailyUpdatesDto> {
+    // Check if user has VIEW_DAILY_UPDATES_FULL permission
+    const hasFullPermission = await this.userService.hasPermission(
+      currentUserId,
+      'VIEW_DAILY_UPDATES_FULL'
+    );
+
+    let projectIds: string[] = [];
+    
+    // If user doesn't have full permission, get their project IDs
+    if (!hasFullPermission) {
+      projectIds = await this.userService.getUserProjectIds(currentUserId);
+      
+      // If user has no projects, return empty result
+      if (projectIds.length === 0) {
+        return {
+          data: [],
+          total: 0,
+          page: searchDto.page || 1,
+          limit: searchDto.limit || 10,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        };
+      }
+    }
+
+    // Build search criteria
+    const searchCriteria: any = {};
+    
+    if (searchDto.userId) {
+      searchCriteria.userId = searchDto.userId;
+    }
+    
+    if (searchDto.projectId) {
+      searchCriteria.projectId = searchDto.projectId;
+    } else if (!hasFullPermission) {
+      // If no specific project filter and user doesn't have full permission, 
+      // restrict to their projects
+      searchCriteria.projectId = projectIds;
+    }
+    
+    if (searchDto.teamId) {
+      searchCriteria.teamId = searchDto.teamId;
+    }
+    
+    if (searchDto.status) {
+      searchCriteria.status = searchDto.status;
+    }
+    
+    if (searchDto.tickets) {
+      searchCriteria.tickets = searchDto.tickets;
+    }
+    
+    if (searchDto.startDate && searchDto.endDate) {
+      searchCriteria.startDate = new Date(searchDto.startDate);
+      searchCriteria.endDate = new Date(searchDto.endDate);
+    }
+
+    const page = searchDto.page || 1;
+    const limit = searchDto.limit || 10;
+    const offset = (page - 1) * limit;
+
+    // Get paginated results
+    const [rawData, total] = await Promise.all([
+      this.dailyUpdateRepository.searchWithPagination(searchCriteria, limit, offset),
+      this.dailyUpdateRepository.countWithCriteria(searchCriteria)
+    ]);
+
+    // Transform the raw data to match the DTO structure
+    const data: DailyUpdateWithTeamDto[] = rawData.map(item => ({
+      id: item.id,
+      userId: item.userId,
+      projectId: item.projectId,
+      teamId: item.teamId,
+      date: item.date,
+      tickets: item.tickets,
+      internalMeetingHours: item.internalMeetingHours,
+      externalMeetingHours: item.externalMeetingHours,
+      otherActivities: item.otherActivities,
+      otherActivityHours: item.otherActivityHours,
+      totalHours: item.totalHours,
+      notes: item.notes,
+      status: item.status,
+      submittedAt: item.submittedAt,
+      approvedAt: item.approvedAt,
+      approvedBy: item.approvedBy,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      teamName: item.teamName,
+      teamDescription: item.teamDescription,
+    }));
+
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+    };
+  }
+
+  async hasPermission(userId: string, permissionName: string): Promise<boolean> {
+    return this.userService.hasPermission(userId, permissionName);
+  }
+
+  async getUserProjectIds(userId: string): Promise<string[]> {
+    return this.userService.getUserProjectIds(userId);
+  }
+
+  async getTeamByProject(projectId: string): Promise<{ id: string; name: string; description: string | null } | null> {
+    const result = await this.dailyUpdateRepository.getTeamByProject(projectId);
+    return result;
   }
 
   async approve(id: string, approverId: string): Promise<DailyUpdate> {

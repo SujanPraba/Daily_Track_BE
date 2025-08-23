@@ -3,7 +3,11 @@ import * as bcrypt from 'bcryptjs';
 import { UserRepository } from '../repositories/user.repository';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
+import { SearchUsersDto } from '../dtos/search-users.dto';
+import { PaginatedUsersDto } from '../dtos/paginated-users.dto';
 import { User } from '../../../database/schemas/user.schema';
+import { UserProjectRoleResponseDto } from '../dtos/user-project-role-response.dto';
+import { UserWithAssignmentsDto } from '../dtos/user-with-assignments.dto';
 
 @Injectable()
 export class UserService {
@@ -15,20 +19,40 @@ export class UserService {
       throw new BadRequestException('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
-    const userData = {
-      ...createUserDto,
+    // Extract assignment fields before creating user
+    const { projectRoleAssignments, teamId, ...userData } = createUserDto;
+
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    const userToCreate = {
+      ...userData,
       password: hashedPassword,
     };
 
-    return this.userRepository.create(userData);
+    // Create the user first
+    const createdUser = await this.userRepository.create(userToCreate);
+
+    // Handle project-role assignments (which now include team assignments)
+    if (projectRoleAssignments && projectRoleAssignments.length > 0) {
+      await this.userRepository.assignProjectRoles(createdUser.id, projectRoleAssignments);
+    }
+
+    // Handle legacy team assignment if provided (for backward compatibility)
+    if (teamId && (!projectRoleAssignments || projectRoleAssignments.length === 0)) {
+      await this.userRepository.assignTeam(createdUser.id, teamId);
+    }
+
+    return createdUser;
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserWithAssignmentsDto[]> {
     return this.userRepository.findAll();
   }
 
-  async findOne(id: string): Promise<User> {
+  async searchUsers(searchDto: SearchUsersDto): Promise<PaginatedUsersDto> {
+    return this.userRepository.searchUsers(searchDto);
+  }
+
+  async findOne(id: string): Promise<UserWithAssignmentsDto> {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -36,8 +60,18 @@ export class UserService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserWithAssignmentsDto | null> {
     return this.userRepository.findByEmail(email);
+  }
+
+  async findByEmailForAuth(email: string): Promise<User | null> {
+    // This method is specifically for authentication and returns the user with password
+    const result = await this.userRepository.findByEmailRaw(email);
+    return result;
+  }
+
+  async findUserWithCompleteInformation(userId: string) {
+    return this.userRepository.findUserWithCompleteInformation(userId);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -47,7 +81,23 @@ export class UserService {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
     }
 
-    return this.userRepository.update(id, updateUserDto);
+    // Extract assignment fields before updating user
+    const { projectRoleAssignments, teamId, ...userData } = updateUserDto;
+
+    // Update the user first
+    const updatedUser = await this.userRepository.update(id, userData);
+
+    // Handle project-role assignments if provided (which now include team assignments)
+    if (projectRoleAssignments !== undefined) {
+      await this.userRepository.assignProjectRoles(id, projectRoleAssignments);
+    }
+
+    // Handle legacy team assignment if provided (for backward compatibility)
+    if (teamId !== undefined && projectRoleAssignments === undefined) {
+      await this.userRepository.assignTeam(id, teamId);
+    }
+
+    return updatedUser;
   }
 
   async remove(id: string): Promise<void> {
@@ -55,23 +105,18 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async assignToProject(userId: string, projectId: string): Promise<void> {
+  async assignProjectRoles(userId: string, projectRoleAssignments: Array<{ projectId: string; roleId: string }>): Promise<void> {
     const user = await this.findOne(userId);
-    await this.userRepository.assignToProject(userId, projectId);
+    await this.userRepository.assignProjectRoles(userId, projectRoleAssignments);
   }
 
-  async assignToTeam(userId: string, teamId: string): Promise<void> {
+  async assignTeam(userId: string, teamId: string): Promise<void> {
     const user = await this.findOne(userId);
-    await this.userRepository.assignToTeam(userId, teamId);
+    await this.userRepository.assignTeam(userId, teamId);
   }
 
-  async assignRole(userId: string, roleId: string): Promise<void> {
-    const user = await this.findOne(userId);
-    await this.userRepository.assignRole(userId, roleId);
-  }
-
-  async getUserProjects(userId: string) {
-    return this.userRepository.getUserProjects(userId);
+  async getUserProjectRoles(userId: string): Promise<UserProjectRoleResponseDto[]> {
+    return this.userRepository.getUserProjectRoles(userId);
   }
 
   async getUserTeams(userId: string) {
@@ -80,5 +125,13 @@ export class UserService {
 
   async getUserRoles(userId: string) {
     return this.userRepository.getUserRoles(userId);
+  }
+
+  async hasPermission(userId: string, permissionName: string): Promise<boolean> {
+    return this.userRepository.hasPermission(userId, permissionName);
+  }
+
+  async getUserProjectIds(userId: string): Promise<string[]> {
+    return this.userRepository.getUserProjectIds(userId);
   }
 }

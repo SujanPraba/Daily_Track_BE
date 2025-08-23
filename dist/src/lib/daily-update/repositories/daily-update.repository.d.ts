@@ -11,4 +11,11 @@ export declare class DailyUpdateRepository {
     findByDateRange(startDate: Date, endDate: Date): Promise<DailyUpdate[]>;
     update(id: string, dailyUpdate: Partial<NewDailyUpdate>): Promise<DailyUpdate>;
     delete(id: string): Promise<void>;
+    searchWithPagination(criteria: any, limit: number, offset: number): Promise<any[]>;
+    countWithCriteria(criteria: any): Promise<number>;
+    getTeamByProject(projectId: string): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+    } | null>;
 }

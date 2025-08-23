@@ -19,6 +19,8 @@ const role_service_1 = require("../services/role.service");
 const create_role_dto_1 = require("../dtos/create-role.dto");
 const update_role_dto_1 = require("../dtos/update-role.dto");
 const assign_permissions_dto_1 = require("../dtos/assign-permissions.dto");
+const search_roles_dto_1 = require("../dtos/search-roles.dto");
+const paginated_roles_dto_1 = require("../dtos/paginated-roles.dto");
 const jwt_auth_guard_1 = require("../../auth/guards/jwt-auth.guard");
 let RoleController = class RoleController {
     constructor(roleService) {
@@ -29,6 +31,9 @@ let RoleController = class RoleController {
     }
     findAll() {
         return this.roleService.findAll();
+    }
+    searchRoles(searchDto) {
+        return this.roleService.searchRoles(searchDto);
     }
     findOne(id) {
         return this.roleService.findOne(id);
@@ -48,7 +53,10 @@ let RoleController = class RoleController {
 };
 exports.RoleController = RoleController;
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new role' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Create a new role',
+        description: 'Create a new role with optional permission assignments'
+    }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Role created successfully' }),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -57,13 +65,26 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], RoleController.prototype, "create", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get all roles' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all roles (without pagination)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'List of all roles' }),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], RoleController.prototype, "findAll", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Search and get all roles with pagination and filtering' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Paginated list of roles',
+        type: paginated_roles_dto_1.PaginatedRolesDto
+    }),
+    (0, common_1.Post)('search'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [search_roles_dto_1.SearchRolesDto]),
+    __metadata("design:returntype", Promise)
+], RoleController.prototype, "searchRoles", null);
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get role by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Role found' }),

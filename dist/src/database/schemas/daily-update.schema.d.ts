@@ -65,13 +65,13 @@ export declare const dailyUpdates: import("drizzle-orm/pg-core").PgTableWithColu
         tickets: import("drizzle-orm/pg-core").PgColumn<{
             name: "tickets";
             tableName: "daily_updates";
-            dataType: "json";
-            columnType: "PgJson";
-            data: string[];
-            driverParam: unknown;
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
             notNull: false;
             hasDefault: true;
-            enumValues: undefined;
+            enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
         internalMeetingHours: import("drizzle-orm/pg-core").PgColumn<{

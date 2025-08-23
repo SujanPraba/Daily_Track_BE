@@ -6,4 +6,5 @@ export declare class CreateProjectDto {
     status?: string;
     startDate?: string;
     endDate?: string;
+    roleIds?: string[];
 }

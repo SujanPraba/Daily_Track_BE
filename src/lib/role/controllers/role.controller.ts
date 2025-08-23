@@ -13,6 +13,8 @@ import { RoleService } from '../services/role.service';
 import { CreateRoleDto } from '../dtos/create-role.dto';
 import { UpdateRoleDto } from '../dtos/update-role.dto';
 import { AssignPermissionsDto } from '../dtos/assign-permissions.dto';
+import { SearchRolesDto } from '../dtos/search-roles.dto';
+import { PaginatedRolesDto } from '../dtos/paginated-roles.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @ApiTags('Roles')
@@ -22,18 +24,32 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
-  @ApiOperation({ summary: 'Create a new role' })
+  @ApiOperation({ 
+    summary: 'Create a new role',
+    description: 'Create a new role with optional permission assignments'
+  })
   @ApiResponse({ status: 201, description: 'Role created successfully' })
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(createRoleDto);
   }
 
-  @ApiOperation({ summary: 'Get all roles' })
+  @ApiOperation({ summary: 'Get all roles (without pagination)' })
   @ApiResponse({ status: 200, description: 'List of all roles' })
   @Get()
   findAll() {
     return this.roleService.findAll();
+  }
+
+  @ApiOperation({ summary: 'Search and get all roles with pagination and filtering' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Paginated list of roles',
+    type: PaginatedRolesDto
+  })
+  @Post('search')
+  searchRoles(@Body() searchDto: SearchRolesDto): Promise<PaginatedRolesDto> {
+    return this.roleService.searchRoles(searchDto);
   }
 
   @ApiOperation({ summary: 'Get role by ID' })

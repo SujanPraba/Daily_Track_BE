@@ -17,6 +17,9 @@ const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const database_module_1 = require("../../../database/database.module");
 const team_schema_1 = require("../../../database/schemas/team.schema");
+const project_schema_1 = require("../../../database/schemas/project.schema");
+const user_schema_1 = require("../../../database/schemas/user.schema");
+const user_team_schema_1 = require("../../../database/schemas/user-team.schema");
 let TeamRepository = class TeamRepository {
     constructor(db) {
         this.db = db;
@@ -26,17 +29,162 @@ let TeamRepository = class TeamRepository {
         return result;
     }
     async findAll() {
-        return this.db.select().from(team_schema_1.teams);
+        return this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+            projectId: team_schema_1.teams.projectId,
+            projectName: project_schema_1.projects.name,
+            leadId: team_schema_1.teams.leadId,
+            leadName: (0, drizzle_orm_1.sql) `CONCAT(${user_schema_1.users.firstName}, ' ', ${user_schema_1.users.lastName})`,
+            userCount: (0, drizzle_orm_1.sql) `(
+          SELECT COUNT(*)::int 
+          FROM ${user_team_schema_1.userTeams} 
+          WHERE ${user_team_schema_1.userTeams.teamId} = ${team_schema_1.teams.id}
+        )`,
+            isActive: team_schema_1.teams.isActive,
+            createdAt: team_schema_1.teams.createdAt,
+            updatedAt: team_schema_1.teams.updatedAt,
+        })
+            .from(team_schema_1.teams)
+            .leftJoin(project_schema_1.projects, (0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, project_schema_1.projects.id))
+            .leftJoin(user_schema_1.users, (0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, user_schema_1.users.id));
     }
     async findById(id) {
-        const [result] = await this.db.select().from(team_schema_1.teams).where((0, drizzle_orm_1.eq)(team_schema_1.teams.id, id));
+        const [result] = await this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+            projectId: team_schema_1.teams.projectId,
+            projectName: project_schema_1.projects.name,
+            leadId: team_schema_1.teams.leadId,
+            leadName: (0, drizzle_orm_1.sql) `CONCAT(${user_schema_1.users.firstName}, ' ', ${user_schema_1.users.lastName})`,
+            userCount: (0, drizzle_orm_1.sql) `(
+          SELECT COUNT(*)::int 
+          FROM ${user_team_schema_1.userTeams} 
+          WHERE ${user_team_schema_1.userTeams.teamId} = ${team_schema_1.teams.id}
+        )`,
+            isActive: team_schema_1.teams.isActive,
+            createdAt: team_schema_1.teams.createdAt,
+            updatedAt: team_schema_1.teams.updatedAt,
+        })
+            .from(team_schema_1.teams)
+            .leftJoin(project_schema_1.projects, (0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, project_schema_1.projects.id))
+            .leftJoin(user_schema_1.users, (0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, user_schema_1.users.id))
+            .where((0, drizzle_orm_1.eq)(team_schema_1.teams.id, id));
         return result || null;
     }
     async findByProject(projectId) {
-        return this.db.select().from(team_schema_1.teams).where((0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, projectId));
+        return this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+            projectId: team_schema_1.teams.projectId,
+            projectName: project_schema_1.projects.name,
+            leadId: team_schema_1.teams.leadId,
+            leadName: (0, drizzle_orm_1.sql) `CONCAT(${user_schema_1.users.firstName}, ' ', ${user_schema_1.users.lastName})`,
+            userCount: (0, drizzle_orm_1.sql) `(
+          SELECT COUNT(*)::int 
+          FROM ${user_team_schema_1.userTeams} 
+          WHERE ${user_team_schema_1.userTeams.teamId} = ${team_schema_1.teams.id}
+        )`,
+            isActive: team_schema_1.teams.isActive,
+            createdAt: team_schema_1.teams.createdAt,
+            updatedAt: team_schema_1.teams.updatedAt,
+        })
+            .from(team_schema_1.teams)
+            .leftJoin(project_schema_1.projects, (0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, project_schema_1.projects.id))
+            .leftJoin(user_schema_1.users, (0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, user_schema_1.users.id))
+            .where((0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, projectId));
     }
     async findByLead(leadId) {
-        return this.db.select().from(team_schema_1.teams).where((0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, leadId));
+        return this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+            projectId: team_schema_1.teams.projectId,
+            projectName: project_schema_1.projects.name,
+            leadId: team_schema_1.teams.leadId,
+            leadName: (0, drizzle_orm_1.sql) `CONCAT(${user_schema_1.users.firstName}, ' ', ${user_schema_1.users.lastName})`,
+            userCount: (0, drizzle_orm_1.sql) `(
+          SELECT COUNT(*)::int 
+          FROM ${user_team_schema_1.userTeams} 
+          WHERE ${user_team_schema_1.userTeams.teamId} = ${team_schema_1.teams.id}
+        )`,
+            isActive: team_schema_1.teams.isActive,
+            createdAt: team_schema_1.teams.createdAt,
+            updatedAt: team_schema_1.teams.updatedAt,
+        })
+            .from(team_schema_1.teams)
+            .leftJoin(project_schema_1.projects, (0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, project_schema_1.projects.id))
+            .leftJoin(user_schema_1.users, (0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, user_schema_1.users.id))
+            .where((0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, leadId));
+    }
+    async searchTeams(searchDto) {
+        const { searchTerm, page = 1, limit = 10, projectId, leadId } = searchDto;
+        const offset = (page - 1) * limit;
+        const whereConditions = [];
+        if (searchTerm) {
+            whereConditions.push((0, drizzle_orm_1.like)(team_schema_1.teams.name, `%${searchTerm}%`));
+        }
+        if (projectId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, projectId));
+        }
+        if (leadId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, leadId));
+        }
+        const countQuery = this.db
+            .select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(team_schema_1.teams);
+        if (whereConditions.length > 0) {
+            countQuery.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const [{ count }] = await countQuery;
+        const total = Number(count);
+        const query = this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+            projectId: team_schema_1.teams.projectId,
+            projectName: project_schema_1.projects.name,
+            leadId: team_schema_1.teams.leadId,
+            leadName: (0, drizzle_orm_1.sql) `CONCAT(${user_schema_1.users.firstName}, ' ', ${user_schema_1.users.lastName})`,
+            userCount: (0, drizzle_orm_1.sql) `(
+          SELECT COUNT(*)::int 
+          FROM ${user_team_schema_1.userTeams} 
+          WHERE ${user_team_schema_1.userTeams.teamId} = ${team_schema_1.teams.id}
+        )`,
+            isActive: team_schema_1.teams.isActive,
+            createdAt: team_schema_1.teams.createdAt,
+            updatedAt: team_schema_1.teams.updatedAt,
+        })
+            .from(team_schema_1.teams)
+            .leftJoin(project_schema_1.projects, (0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, project_schema_1.projects.id))
+            .leftJoin(user_schema_1.users, (0, drizzle_orm_1.eq)(team_schema_1.teams.leadId, user_schema_1.users.id))
+            .orderBy((0, drizzle_orm_1.desc)(team_schema_1.teams.createdAt))
+            .limit(limit)
+            .offset(offset);
+        if (whereConditions.length > 0) {
+            query.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const data = await query;
+        const totalPages = Math.ceil(total / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+        return {
+            data,
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage,
+            hasPrevPage,
+        };
     }
     async update(id, team) {
         const [result] = await this.db

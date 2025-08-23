@@ -8,12 +8,16 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DailyUpdateService } from '../services/daily-update.service';
 import { CreateDailyUpdateDto } from '../dtos/create-daily-update.dto';
 import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
 import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
+import { SearchDailyUpdatesDto } from '../dtos/search-daily-updates.dto';
+import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
+import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @ApiTags('Daily Updates')
@@ -30,29 +34,54 @@ export class DailyUpdateController {
     return this.dailyUpdateService.create(createDailyUpdateDto);
   }
 
-  @ApiOperation({ summary: 'Get all daily updates' })
+  @ApiOperation({ summary: 'Search and filter daily updates with pagination and team information' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Paginated list of daily updates with team information', 
+    type: PaginatedDailyUpdatesDto 
+  })
+  @Post('search')
+  async searchDailyUpdates(
+    @Body() searchDto: SearchDailyUpdatesDto,
+    @Request() req: any
+  ): Promise<PaginatedDailyUpdatesDto> {
+    // Extract user ID from JWT token
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error('User ID not found in token');
+    }
+    
+    return this.dailyUpdateService.searchDailyUpdates(searchDto, userId);
+  }
+
+  @ApiOperation({ summary: 'Get all daily updates (legacy endpoint)' })
   @ApiResponse({ status: 200, description: 'List of all daily updates' })
   @Get()
-  findAll(
-    @Query('userId') userId?: string,
-    @Query('projectId') projectId?: string,
-    @Query('status') status?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
-    if (userId) {
-      return this.dailyUpdateService.findByUser(userId);
+  async findAll(@Request() req: any) {
+    // Extract user ID from JWT token
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error('User ID not found in token');
     }
-    if (projectId) {
-      return this.dailyUpdateService.findByProject(projectId);
+    
+    // Check if user has VIEW_DAILY_UPDATES_FULL permission
+    const hasFullPermission = await this.dailyUpdateService.hasPermission(
+      userId,
+      'VIEW_DAILY_UPDATES_FULL'
+    );
+
+    if (hasFullPermission) {
+      return this.dailyUpdateService.findAll();
+    } else {
+      // Get user's project IDs and return only those updates
+      const projectIds = await this.dailyUpdateService.getUserProjectIds(userId);
+      if (projectIds.length === 0) {
+        return [];
+      }
+      
+      // For now, return updates from the first project (you might want to enhance this)
+      return this.dailyUpdateService.findByProject(projectIds[0]);
     }
-    if (status) {
-      return this.dailyUpdateService.findByStatus(status);
-    }
-    if (startDate && endDate) {
-      return this.dailyUpdateService.findByDateRange(new Date(startDate), new Date(endDate));
-    }
-    return this.dailyUpdateService.findAll();
   }
 
   @ApiOperation({ summary: 'Get daily update by ID' })
@@ -61,6 +90,14 @@ export class DailyUpdateController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.dailyUpdateService.findOne(id);
+  }
+
+  @ApiOperation({ summary: 'Get team information for a project' })
+  @ApiResponse({ status: 200, description: 'Team information found' })
+  @ApiResponse({ status: 404, description: 'Team not found for this project' })
+  @Get('project/:projectId/team')
+  async getTeamByProject(@Param('projectId') projectId: string) {
+    return this.dailyUpdateService.getTeamByProject(projectId);
   }
 
   @ApiOperation({ summary: 'Update daily update' })

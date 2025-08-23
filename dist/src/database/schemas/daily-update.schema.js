@@ -11,7 +11,7 @@ exports.dailyUpdates = (0, pg_core_1.pgTable)('daily_updates', {
     projectId: (0, pg_core_1.uuid)('project_id').references(() => project_schema_1.projects.id).notNull(),
     teamId: (0, pg_core_1.uuid)('team_id').references(() => team_schema_1.teams.id),
     date: (0, pg_core_1.timestamp)('date').notNull(),
-    tickets: (0, pg_core_1.json)('tickets').$type().default([]),
+    tickets: (0, pg_core_1.text)('tickets').default(''),
     internalMeetingHours: (0, pg_core_1.decimal)('internal_meeting_hours', { precision: 4, scale: 2 }).default('0.00'),
     externalMeetingHours: (0, pg_core_1.decimal)('external_meeting_hours', { precision: 4, scale: 2 }).default('0.00'),
     otherActivities: (0, pg_core_1.text)('other_activities'),

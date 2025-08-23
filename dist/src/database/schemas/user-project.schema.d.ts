@@ -38,6 +38,18 @@ export declare const userProjects: import("drizzle-orm/pg-core").PgTableWithColu
             enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
+        roleId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "role_id";
+            tableName: "user_projects";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
         assignedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "assigned_at";
             tableName: "user_projects";

@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PermissionRepository } from '../repositories/permission.repository';
 import { CreatePermissionDto } from '../dtos/create-permission.dto';
 import { UpdatePermissionDto } from '../dtos/update-permission.dto';
+import { SearchPermissionsDto } from '../dtos/search-permissions.dto';
+import { PaginatedPermissionsDto } from '../dtos/paginated-permissions.dto';
 import { Permission } from '../../../database/schemas/permission.schema';
 
 @Injectable()
@@ -20,8 +22,24 @@ export class PermissionService {
     return this.permissionRepository.findAll();
   }
 
+  async findAllWithModule(): Promise<any[]> {
+    return this.permissionRepository.findAllWithModule();
+  }
+
+  async searchPermissions(searchDto: SearchPermissionsDto): Promise<PaginatedPermissionsDto> {
+    return this.permissionRepository.searchPermissions(searchDto);
+  }
+
   async findOne(id: string): Promise<Permission> {
     const permission = await this.permissionRepository.findById(id);
+    if (!permission) {
+      throw new NotFoundException('Permission not found');
+    }
+    return permission;
+  }
+
+  async findOneWithModule(id: string): Promise<any> {
+    const permission = await this.permissionRepository.findByIdWithModule(id);
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
@@ -38,7 +56,7 @@ export class PermissionService {
     await this.permissionRepository.delete(id);
   }
 
-  async findByModule(module: string): Promise<Permission[]> {
-    return this.permissionRepository.findByModule(module);
+  async findByModuleId(moduleId: string): Promise<Permission[]> {
+    return this.permissionRepository.findByModuleId(moduleId);
   }
 }

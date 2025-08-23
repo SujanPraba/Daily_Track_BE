@@ -3,4 +3,5 @@ export declare class CreateRoleDto {
     description?: string;
     level?: string;
     isActive?: boolean;
+    permissionIds?: string[];
 }

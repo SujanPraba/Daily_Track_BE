@@ -2,12 +2,15 @@ import { RoleRepository } from '../repositories/role.repository';
 import { CreateRoleDto } from '../dtos/create-role.dto';
 import { UpdateRoleDto } from '../dtos/update-role.dto';
 import { AssignPermissionsDto } from '../dtos/assign-permissions.dto';
+import { SearchRolesDto } from '../dtos/search-roles.dto';
+import { PaginatedRolesDto } from '../dtos/paginated-roles.dto';
 import { Role } from '../../../database/schemas/role.schema';
 export declare class RoleService {
     private readonly roleRepository;
     constructor(roleRepository: RoleRepository);
     create(createRoleDto: CreateRoleDto): Promise<Role>;
     findAll(): Promise<Role[]>;
+    searchRoles(searchDto: SearchRolesDto): Promise<PaginatedRolesDto>;
     findOne(id: string): Promise<Role>;
     update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role>;
     remove(id: string): Promise<void>;

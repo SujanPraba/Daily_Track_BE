@@ -1,11 +1,13 @@
 import { pgTable, uuid, timestamp } from 'drizzle-orm/pg-core';
 import { users } from './user.schema';
 import { projects } from './project.schema';
+import { roles } from './role.schema';
 
 export const userProjects = pgTable('user_projects', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id).notNull(),
   projectId: uuid('project_id').references(() => projects.id).notNull(),
+  roleId: uuid('role_id').references(() => roles.id).notNull(),
   assignedAt: timestamp('assigned_at').defaultNow(),
   createdAt: timestamp('created_at').defaultNow(),
 });

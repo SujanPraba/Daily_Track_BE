@@ -30,6 +30,50 @@ let RoleRepository = class RoleRepository {
     async findAll() {
         return this.db.select().from(role_schema_1.roles);
     }
+    async searchRoles(searchDto) {
+        const { searchTerm, page = 1, limit = 10, level, isActive } = searchDto;
+        const offset = (page - 1) * limit;
+        const whereConditions = [];
+        if (searchTerm) {
+            whereConditions.push((0, drizzle_orm_1.or)((0, drizzle_orm_1.like)(role_schema_1.roles.name, `%${searchTerm}%`), (0, drizzle_orm_1.like)(role_schema_1.roles.level, `%${searchTerm}%`)));
+        }
+        if (level) {
+            whereConditions.push((0, drizzle_orm_1.eq)(role_schema_1.roles.level, level));
+        }
+        if (isActive !== undefined) {
+            whereConditions.push((0, drizzle_orm_1.eq)(role_schema_1.roles.isActive, isActive));
+        }
+        const countQuery = this.db
+            .select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(role_schema_1.roles);
+        if (whereConditions.length > 0) {
+            countQuery.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const [{ count }] = await countQuery;
+        const total = Number(count);
+        const query = this.db
+            .select()
+            .from(role_schema_1.roles)
+            .orderBy((0, drizzle_orm_1.desc)(role_schema_1.roles.createdAt))
+            .limit(limit)
+            .offset(offset);
+        if (whereConditions.length > 0) {
+            query.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const data = await query;
+        const totalPages = Math.ceil(total / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+        return {
+            data,
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage,
+            hasPrevPage,
+        };
+    }
     async findById(id) {
         const [result] = await this.db.select().from(role_schema_1.roles).where((0, drizzle_orm_1.eq)(role_schema_1.roles.id, id));
         return result || null;

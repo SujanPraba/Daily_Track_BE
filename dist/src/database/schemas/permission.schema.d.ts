@@ -38,28 +38,16 @@ export declare const permissions: import("drizzle-orm/pg-core").PgTableWithColum
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
-        module: import("drizzle-orm/pg-core").PgColumn<{
-            name: "module";
+        moduleId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "module_id";
             tableName: "permissions";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgUUID";
             data: string;
             driverParam: string;
             notNull: true;
             hasDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        action: import("drizzle-orm/pg-core").PgColumn<{
-            name: "action";
-            tableName: "permissions";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
+            enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
         isActive: import("drizzle-orm/pg-core").PgColumn<{

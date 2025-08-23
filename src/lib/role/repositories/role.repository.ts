@@ -1,9 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, like, and, desc, sql, or } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import { roles, Role, NewRole } from '../../../database/schemas/role.schema';
 import { rolePermissions } from '../../../database/schemas/role-permission.schema';
 import { permissions } from '../../../database/schemas/permission.schema';
+import { SearchRolesDto } from '../dtos/search-roles.dto';
+import { PaginatedRolesDto } from '../dtos/paginated-roles.dto';
 
 @Injectable()
 export class RoleRepository {
@@ -16,6 +18,71 @@ export class RoleRepository {
 
   async findAll(): Promise<Role[]> {
     return this.db.select().from(roles);
+  }
+
+  async searchRoles(searchDto: SearchRolesDto): Promise<PaginatedRolesDto> {
+    const { searchTerm, page = 1, limit = 10, level, isActive } = searchDto;
+    const offset = (page - 1) * limit;
+
+    // Build where conditions
+    const whereConditions: any[] = [];
+
+    if (searchTerm) {
+      whereConditions.push(
+        or(
+          like(roles.name, `%${searchTerm}%`),
+          like(roles.level, `%${searchTerm}%`)
+        )
+      );
+    }
+
+    if (level) {
+      whereConditions.push(eq(roles.level, level));
+    }
+
+    if (isActive !== undefined) {
+      whereConditions.push(eq(roles.isActive, isActive));
+    }
+
+    // Get total count
+    const countQuery = this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(roles);
+
+    if (whereConditions.length > 0) {
+      countQuery.where(and(...whereConditions));
+    }
+
+    const [{ count }] = await countQuery;
+    const total = Number(count);
+
+    // Get paginated results
+    const query = this.db
+      .select()
+      .from(roles)
+      .orderBy(desc(roles.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    if (whereConditions.length > 0) {
+      query.where(and(...whereConditions));
+    }
+
+    const data = await query;
+
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      data,
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+    };
   }
 
   async findById(id: string): Promise<Role | null> {

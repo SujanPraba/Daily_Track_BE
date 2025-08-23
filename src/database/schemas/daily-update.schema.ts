@@ -9,7 +9,7 @@ export const dailyUpdates = pgTable('daily_updates', {
   projectId: uuid('project_id').references(() => projects.id).notNull(),
   teamId: uuid('team_id').references(() => teams.id),
   date: timestamp('date').notNull(),
-  tickets: json('tickets').$type<string[]>().default([]),
+  tickets: text('tickets').default(''),
   internalMeetingHours: decimal('internal_meeting_hours', { precision: 4, scale: 2 }).default('0.00'),
   externalMeetingHours: decimal('external_meeting_hours', { precision: 4, scale: 2 }).default('0.00'),
   otherActivities: text('other_activities'),

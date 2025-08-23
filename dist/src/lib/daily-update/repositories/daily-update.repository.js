@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const database_module_1 = require("../../../database/database.module");
 const daily_update_schema_1 = require("../../../database/schemas/daily-update.schema");
+const team_schema_1 = require("../../../database/schemas/team.schema");
 let DailyUpdateRepository = class DailyUpdateRepository {
     constructor(db) {
         this.db = db;
@@ -57,6 +58,106 @@ let DailyUpdateRepository = class DailyUpdateRepository {
     }
     async delete(id) {
         await this.db.delete(daily_update_schema_1.dailyUpdates).where((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.id, id));
+    }
+    async searchWithPagination(criteria, limit, offset) {
+        let whereConditions = [];
+        if (criteria.userId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.userId, criteria.userId));
+        }
+        if (criteria.projectId) {
+            if (Array.isArray(criteria.projectId)) {
+                whereConditions.push((0, drizzle_orm_1.inArray)(daily_update_schema_1.dailyUpdates.projectId, criteria.projectId));
+            }
+            else {
+                whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.projectId, criteria.projectId));
+            }
+        }
+        if (criteria.teamId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.teamId, criteria.teamId));
+        }
+        if (criteria.status) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.status, criteria.status));
+        }
+        if (criteria.tickets) {
+            whereConditions.push((0, drizzle_orm_1.sql) `${daily_update_schema_1.dailyUpdates.tickets}::text ILIKE ${`%${criteria.tickets}%`}`);
+        }
+        if (criteria.startDate && criteria.endDate) {
+            whereConditions.push((0, drizzle_orm_1.and)((0, drizzle_orm_1.gte)(daily_update_schema_1.dailyUpdates.date, criteria.startDate), (0, drizzle_orm_1.lte)(daily_update_schema_1.dailyUpdates.date, criteria.endDate)));
+        }
+        const whereClause = whereConditions.length > 0 ? (0, drizzle_orm_1.and)(...whereConditions) : undefined;
+        return this.db
+            .select({
+            id: daily_update_schema_1.dailyUpdates.id,
+            userId: daily_update_schema_1.dailyUpdates.userId,
+            projectId: daily_update_schema_1.dailyUpdates.projectId,
+            teamId: daily_update_schema_1.dailyUpdates.teamId,
+            date: daily_update_schema_1.dailyUpdates.date,
+            tickets: daily_update_schema_1.dailyUpdates.tickets,
+            internalMeetingHours: daily_update_schema_1.dailyUpdates.internalMeetingHours,
+            externalMeetingHours: daily_update_schema_1.dailyUpdates.externalMeetingHours,
+            otherActivities: daily_update_schema_1.dailyUpdates.otherActivities,
+            otherActivityHours: daily_update_schema_1.dailyUpdates.otherActivityHours,
+            totalHours: daily_update_schema_1.dailyUpdates.totalHours,
+            notes: daily_update_schema_1.dailyUpdates.notes,
+            status: daily_update_schema_1.dailyUpdates.status,
+            submittedAt: daily_update_schema_1.dailyUpdates.submittedAt,
+            approvedAt: daily_update_schema_1.dailyUpdates.approvedAt,
+            approvedBy: daily_update_schema_1.dailyUpdates.approvedBy,
+            createdAt: daily_update_schema_1.dailyUpdates.createdAt,
+            updatedAt: daily_update_schema_1.dailyUpdates.updatedAt,
+            teamName: team_schema_1.teams.name,
+            teamDescription: team_schema_1.teams.description,
+        })
+            .from(daily_update_schema_1.dailyUpdates)
+            .leftJoin(team_schema_1.teams, (0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.projectId, team_schema_1.teams.projectId))
+            .where(whereClause)
+            .orderBy((0, drizzle_orm_1.desc)(daily_update_schema_1.dailyUpdates.createdAt))
+            .limit(limit)
+            .offset(offset);
+    }
+    async countWithCriteria(criteria) {
+        let whereConditions = [];
+        if (criteria.userId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.userId, criteria.userId));
+        }
+        if (criteria.projectId) {
+            if (Array.isArray(criteria.projectId)) {
+                whereConditions.push((0, drizzle_orm_1.inArray)(daily_update_schema_1.dailyUpdates.projectId, criteria.projectId));
+            }
+            else {
+                whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.projectId, criteria.projectId));
+            }
+        }
+        if (criteria.teamId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.teamId, criteria.teamId));
+        }
+        if (criteria.status) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.status, criteria.status));
+        }
+        if (criteria.tickets) {
+            whereConditions.push((0, drizzle_orm_1.sql) `${daily_update_schema_1.dailyUpdates.tickets}::text ILIKE ${`%${criteria.tickets}%`}`);
+        }
+        if (criteria.startDate && criteria.endDate) {
+            whereConditions.push((0, drizzle_orm_1.and)((0, drizzle_orm_1.gte)(daily_update_schema_1.dailyUpdates.date, criteria.startDate), (0, drizzle_orm_1.lte)(daily_update_schema_1.dailyUpdates.date, criteria.endDate)));
+        }
+        const whereClause = whereConditions.length > 0 ? (0, drizzle_orm_1.and)(...whereConditions) : undefined;
+        const result = await this.db
+            .select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(daily_update_schema_1.dailyUpdates)
+            .leftJoin(team_schema_1.teams, (0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.projectId, team_schema_1.teams.projectId))
+            .where(whereClause);
+        return Number(result[0]?.count || 0);
+    }
+    async getTeamByProject(projectId) {
+        const [result] = await this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+        })
+            .from(team_schema_1.teams)
+            .where((0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, projectId));
+        return result || null;
     }
 };
 exports.DailyUpdateRepository = DailyUpdateRepository;

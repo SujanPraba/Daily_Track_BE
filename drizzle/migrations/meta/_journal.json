@@ -8,6 +8,13 @@
       "when": 1755762359244,
       "tag": "0000_fuzzy_lord_tyger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1755847000767,
+      "tag": "0001_mighty_slapstick",
+      "breakpoints": true
     }
   ]
 }

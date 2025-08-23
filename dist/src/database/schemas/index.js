@@ -18,10 +18,12 @@ __exportStar(require("./permission.schema"), exports);
 __exportStar(require("./role.schema"), exports);
 __exportStar(require("./role-permission.schema"), exports);
 __exportStar(require("./project.schema"), exports);
+__exportStar(require("./project-role.schema"), exports);
 __exportStar(require("./team.schema"), exports);
 __exportStar(require("./user.schema"), exports);
 __exportStar(require("./user-role.schema"), exports);
 __exportStar(require("./user-project.schema"), exports);
 __exportStar(require("./user-team.schema"), exports);
 __exportStar(require("./daily-update.schema"), exports);
+__exportStar(require("./module.schema"), exports);
 //# sourceMappingURL=index.js.map

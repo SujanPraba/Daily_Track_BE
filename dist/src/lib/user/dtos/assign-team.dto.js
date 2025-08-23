@@ -16,9 +16,12 @@ class AssignTeamDto {
 }
 exports.AssignTeamDto = AssignTeamDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'uuid-team-id' }),
+    (0, swagger_1.ApiProperty)({
+        example: '2ccfdca6-0daa-4ef5-a7a4-5364011cbbff',
+        description: 'ID of the team to assign to the user'
+    }),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsUUID)('4'),
     __metadata("design:type", String)
 ], AssignTeamDto.prototype, "teamId", void 0);
 //# sourceMappingURL=assign-team.dto.js.map

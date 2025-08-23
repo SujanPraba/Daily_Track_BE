@@ -2,6 +2,8 @@ import { DailyUpdateService } from '../services/daily-update.service';
 import { CreateDailyUpdateDto } from '../dtos/create-daily-update.dto';
 import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
 import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
+import { SearchDailyUpdatesDto } from '../dtos/search-daily-updates.dto';
+import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
 export declare class DailyUpdateController {
     private readonly dailyUpdateService;
     constructor(dailyUpdateService: DailyUpdateService);
@@ -14,7 +16,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;
@@ -25,7 +27,8 @@ export declare class DailyUpdateController {
         approvedAt: Date | null;
         approvedBy: string | null;
     }>;
-    findAll(userId?: string, projectId?: string, status?: string, startDate?: string, endDate?: string): Promise<{
+    searchDailyUpdates(searchDto: SearchDailyUpdatesDto, req: any): Promise<PaginatedDailyUpdatesDto>;
+    findAll(req: any): Promise<{
         date: Date;
         id: string;
         createdAt: Date | null;
@@ -34,7 +37,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;
@@ -54,7 +57,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;
@@ -65,6 +68,11 @@ export declare class DailyUpdateController {
         approvedAt: Date | null;
         approvedBy: string | null;
     }>;
+    getTeamByProject(projectId: string): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+    } | null>;
     update(id: string, updateDailyUpdateDto: UpdateDailyUpdateDto): Promise<{
         date: Date;
         id: string;
@@ -74,7 +82,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;
@@ -95,7 +103,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;
@@ -115,7 +123,7 @@ export declare class DailyUpdateController {
         status: string | null;
         projectId: string;
         teamId: string | null;
-        tickets: string[] | null;
+        tickets: string | null;
         internalMeetingHours: string | null;
         externalMeetingHours: string | null;
         otherActivities: string | null;

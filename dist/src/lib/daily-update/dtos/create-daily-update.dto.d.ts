@@ -3,7 +3,7 @@ export declare class CreateDailyUpdateDto {
     projectId: string;
     teamId?: string;
     date: string;
-    tickets?: string[];
+    tickets?: string;
     internalMeetingHours?: string;
     externalMeetingHours?: string;
     otherActivities?: string;

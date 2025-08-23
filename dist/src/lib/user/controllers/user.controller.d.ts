@@ -1,9 +1,11 @@
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
-import { AssignProjectDto } from '../dtos/assign-project.dto';
+import { AssignProjectRolesDto } from '../dtos/assign-project-roles.dto';
 import { AssignTeamDto } from '../dtos/assign-team.dto';
-import { AssignRoleDto } from '../dtos/assign-role.dto';
+import { UserProjectRoleResponseDto } from '../dtos/user-project-role-response.dto';
+import { SearchUsersDto } from '../dtos/search-users.dto';
+import { PaginatedUsersDto } from '../dtos/paginated-users.dto';
 export declare class UserController {
     private readonly userService;
     constructor(userService: UserService);
@@ -22,36 +24,10 @@ export declare class UserController {
         employeeId: string | null;
         lastLoginAt: Date | null;
     }>;
-    findAll(): Promise<{
-        id: string;
-        isActive: boolean | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
-        firstName: string;
-        lastName: string;
-        email: string;
-        password: string;
-        phone: string | null;
-        department: string | null;
-        position: string | null;
-        employeeId: string | null;
-        lastLoginAt: Date | null;
-    }[]>;
-    findOne(id: string): Promise<{
-        id: string;
-        isActive: boolean | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
-        firstName: string;
-        lastName: string;
-        email: string;
-        password: string;
-        phone: string | null;
-        department: string | null;
-        position: string | null;
-        employeeId: string | null;
-        lastLoginAt: Date | null;
-    }>;
+    findAll(): Promise<import("../dtos/user-with-assignments.dto").UserWithAssignmentsDto[]>;
+    findUserWithCompleteInformation(id: string): Promise<any>;
+    searchUsers(searchDto: SearchUsersDto): Promise<PaginatedUsersDto>;
+    findOne(id: string): Promise<import("../dtos/user-with-assignments.dto").UserWithAssignmentsDto>;
     update(id: string, updateUserDto: UpdateUserDto): Promise<{
         id: string;
         isActive: boolean | null;
@@ -68,10 +44,9 @@ export declare class UserController {
         lastLoginAt: Date | null;
     }>;
     remove(id: string): Promise<void>;
-    assignToProject(id: string, assignProjectDto: AssignProjectDto): Promise<void>;
-    assignToTeam(id: string, assignTeamDto: AssignTeamDto): Promise<void>;
-    assignRole(id: string, assignRoleDto: AssignRoleDto): Promise<void>;
-    getUserProjects(id: string): Promise<any>;
+    assignProjectRoles(id: string, assignProjectRolesDto: AssignProjectRolesDto): Promise<void>;
+    assignTeam(id: string, assignTeamDto: AssignTeamDto): Promise<void>;
+    getUserProjectRoles(id: string): Promise<UserProjectRoleResponseDto[]>;
     getUserTeams(id: string): Promise<any>;
     getUserRoles(id: string): Promise<any>;
 }

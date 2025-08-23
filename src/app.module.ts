@@ -9,6 +9,7 @@ import { ProjectModule } from './lib/project/project.module';
 import { TeamModule } from './lib/team/team.module';
 import { UserModule } from './lib/user/user.module';
 import { DailyUpdateModule } from './lib/daily-update/daily-update.module';
+import { ModuleModule } from './lib/module/module.module';
 import { MigrationService } from './database/migration.service';
 
 @Module({
@@ -28,6 +29,7 @@ import { MigrationService } from './database/migration.service';
     TeamModule,
     UserModule,
     DailyUpdateModule,
+    ModuleModule,
   ],
   providers: [MigrationService],
 })

@@ -99,6 +99,98 @@ let DailyUpdateService = class DailyUpdateService {
     async findByStatus(status) {
         return this.dailyUpdateRepository.findByStatus(status);
     }
+    async searchDailyUpdates(searchDto, currentUserId) {
+        const hasFullPermission = await this.userService.hasPermission(currentUserId, 'VIEW_DAILY_UPDATES_FULL');
+        let projectIds = [];
+        if (!hasFullPermission) {
+            projectIds = await this.userService.getUserProjectIds(currentUserId);
+            if (projectIds.length === 0) {
+                return {
+                    data: [],
+                    total: 0,
+                    page: searchDto.page || 1,
+                    limit: searchDto.limit || 10,
+                    totalPages: 0,
+                    hasNextPage: false,
+                    hasPrevPage: false,
+                };
+            }
+        }
+        const searchCriteria = {};
+        if (searchDto.userId) {
+            searchCriteria.userId = searchDto.userId;
+        }
+        if (searchDto.projectId) {
+            searchCriteria.projectId = searchDto.projectId;
+        }
+        else if (!hasFullPermission) {
+            searchCriteria.projectId = projectIds;
+        }
+        if (searchDto.teamId) {
+            searchCriteria.teamId = searchDto.teamId;
+        }
+        if (searchDto.status) {
+            searchCriteria.status = searchDto.status;
+        }
+        if (searchDto.tickets) {
+            searchCriteria.tickets = searchDto.tickets;
+        }
+        if (searchDto.startDate && searchDto.endDate) {
+            searchCriteria.startDate = new Date(searchDto.startDate);
+            searchCriteria.endDate = new Date(searchDto.endDate);
+        }
+        const page = searchDto.page || 1;
+        const limit = searchDto.limit || 10;
+        const offset = (page - 1) * limit;
+        const [rawData, total] = await Promise.all([
+            this.dailyUpdateRepository.searchWithPagination(searchCriteria, limit, offset),
+            this.dailyUpdateRepository.countWithCriteria(searchCriteria)
+        ]);
+        const data = rawData.map(item => ({
+            id: item.id,
+            userId: item.userId,
+            projectId: item.projectId,
+            teamId: item.teamId,
+            date: item.date,
+            tickets: item.tickets,
+            internalMeetingHours: item.internalMeetingHours,
+            externalMeetingHours: item.externalMeetingHours,
+            otherActivities: item.otherActivities,
+            otherActivityHours: item.otherActivityHours,
+            totalHours: item.totalHours,
+            notes: item.notes,
+            status: item.status,
+            submittedAt: item.submittedAt,
+            approvedAt: item.approvedAt,
+            approvedBy: item.approvedBy,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+            teamName: item.teamName,
+            teamDescription: item.teamDescription,
+        }));
+        const totalPages = Math.ceil(total / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage,
+            hasPrevPage,
+        };
+    }
+    async hasPermission(userId, permissionName) {
+        return this.userService.hasPermission(userId, permissionName);
+    }
+    async getUserProjectIds(userId) {
+        return this.userService.getUserProjectIds(userId);
+    }
+    async getTeamByProject(projectId) {
+        const result = await this.dailyUpdateRepository.getTeamByProject(projectId);
+        return result;
+    }
     async approve(id, approverId) {
         const dailyUpdate = await this.findOne(id);
         await this.userService.findOne(approverId);

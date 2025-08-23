@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { OptionalUUID } from '../../common/decorators/optional-uuid.decorator';
 
 export class CreateTeamDto {
   @ApiProperty({ example: 'Frontend Development Team' })
@@ -17,8 +18,6 @@ export class CreateTeamDto {
   @IsUUID()
   projectId: string;
 
-  @ApiProperty({ example: 'uuid-lead-id' })
-  @IsOptional()
-  @IsUUID()
+  @OptionalUUID('uuid-lead-id', 'ID of the team lead (optional)')
   leadId?: string;
 }

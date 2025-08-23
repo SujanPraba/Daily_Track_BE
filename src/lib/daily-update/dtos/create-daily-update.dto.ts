@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsUUID, IsOptional, IsArray, IsString, IsDateString, IsDecimal } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { OptionalUUID } from '../../common/decorators/optional-uuid.decorator';
 
 export class CreateDailyUpdateDto {
   @ApiProperty({ example: 'uuid-user-id' })
@@ -12,9 +13,7 @@ export class CreateDailyUpdateDto {
   @IsUUID()
   projectId: string;
 
-  @ApiProperty({ example: 'uuid-team-id' })
-  @IsOptional()
-  @IsUUID()
+  @OptionalUUID('uuid-team-id', 'ID of the team (optional)')
   teamId?: string;
 
   @ApiProperty({ example: '2024-01-15T00:00:00.000Z' })
@@ -23,13 +22,12 @@ export class CreateDailyUpdateDto {
   date: string;
 
   @ApiProperty({ 
-    example: ['TICKET-001', 'TICKET-002'], 
-    description: 'Array of ticket numbers worked on' 
+    example: 'TICKET-001, TICKET-002', 
+    description: 'Comma-separated ticket numbers worked on' 
   })
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tickets?: string[];
+  @IsString()
+  tickets?: string;
 
   @ApiProperty({ example: '2.50' })
   @IsOptional()

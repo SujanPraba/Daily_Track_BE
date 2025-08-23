@@ -16,29 +16,26 @@ class CreatePermissionDto {
 }
 exports.CreatePermissionDto = CreatePermissionDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'CREATE_USER' }),
+    (0, swagger_1.ApiProperty)({ example: 'View_Dashboard' }),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePermissionDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Permission to create new users' }),
+    (0, swagger_1.ApiProperty)({ example: 'Permission to view dashboard' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePermissionDto.prototype, "description", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'USER' }),
+    (0, swagger_1.ApiProperty)({
+        example: 'a120f6d9-c200-4f0a-afaa-c617340063e2',
+        description: 'ID of the module this permission belongs to'
+    }),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
-], CreatePermissionDto.prototype, "module", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'CREATE' }),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePermissionDto.prototype, "action", void 0);
+], CreatePermissionDto.prototype, "moduleId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: true }),
     (0, class_validator_1.IsOptional)(),

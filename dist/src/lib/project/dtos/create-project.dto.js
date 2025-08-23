@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateProjectDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const optional_uuid_decorator_1 = require("../../common/decorators/optional-uuid.decorator");
 class CreateProjectDto {
 }
 exports.CreateProjectDto = CreateProjectDto;
@@ -34,9 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "code", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'uuid-manager-id' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUUID)(),
+    (0, optional_uuid_decorator_1.OptionalUUID)('uuid-manager-id', 'ID of the project manager (optional)'),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "managerId", void 0);
 __decorate([
@@ -58,4 +57,15 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "endDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['2ccfdca6-0daa-4ef5-a7a4-5364011cbbff', '3ddgdeb7-1ebb-5fg6-b8b5-6475122dcc00'],
+        description: 'Array of role IDs to assign to this project',
+        required: false
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsUUID)('4', { each: true }),
+    __metadata("design:type", Array)
+], CreateProjectDto.prototype, "roleIds", void 0);
 //# sourceMappingURL=create-project.dto.js.map

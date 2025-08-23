@@ -21,10 +21,18 @@ let RoleService = class RoleService {
         if (existingRole) {
             throw new common_1.BadRequestException('Role with this name already exists');
         }
-        return this.roleRepository.create(createRoleDto);
+        const { permissionIds, ...roleData } = createRoleDto;
+        const createdRole = await this.roleRepository.create(roleData);
+        if (permissionIds && permissionIds.length > 0) {
+            await this.roleRepository.assignPermissions(createdRole.id, permissionIds);
+        }
+        return createdRole;
     }
     async findAll() {
         return this.roleRepository.findAll();
+    }
+    async searchRoles(searchDto) {
+        return this.roleRepository.searchRoles(searchDto);
     }
     async findOne(id) {
         const role = await this.roleRepository.findById(id);

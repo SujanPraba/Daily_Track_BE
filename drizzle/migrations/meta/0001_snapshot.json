@@ -1,0 +1,121 @@
+{
+  "id": "0001_add_modules_table",
+  "prevId": "0000_fuzzy_lord_tyger",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "daily_updates": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "project_id": "uuid",
+      "team_id": "uuid",
+      "date": "timestamp",
+      "tickets": "json",
+      "internal_meeting_hours": "numeric",
+      "external_meeting_hours": "numeric",
+      "other_activities": "text",
+      "other_activity_hours": "numeric",
+      "total_hours": "numeric",
+      "notes": "text",
+      "status": "varchar",
+      "submitted_at": "timestamp",
+      "approved_at": "timestamp",
+      "approved_by": "uuid",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "modules": {
+      "id": "uuid",
+      "name": "varchar",
+      "description": "text",
+      "code": "varchar",
+      "is_active": "boolean",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "permissions": {
+      "id": "uuid",
+      "name": "varchar",
+      "description": "text",
+      "module": "varchar",
+      "module_id": "uuid",
+      "action": "varchar",
+      "is_active": "boolean",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "roles": {
+      "id": "uuid",
+      "name": "varchar",
+      "description": "text",
+      "level": "varchar",
+      "is_active": "boolean",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "role_permissions": {
+      "id": "uuid",
+      "role_id": "uuid",
+      "permission_id": "uuid",
+      "created_at": "timestamp"
+    },
+    "projects": {
+      "id": "uuid",
+      "name": "varchar",
+      "description": "text",
+      "code": "varchar",
+      "manager_id": "uuid",
+      "status": "varchar",
+      "start_date": "timestamp",
+      "end_date": "timestamp",
+      "is_active": "boolean",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "teams": {
+      "id": "uuid",
+      "name": "varchar",
+      "description": "text",
+      "project_id": "uuid",
+      "lead_id": "uuid",
+      "is_active": "boolean",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "users": {
+      "id": "uuid",
+      "first_name": "varchar",
+      "last_name": "varchar",
+      "email": "varchar",
+      "password": "varchar",
+      "phone": "varchar",
+      "department": "varchar",
+      "position": "varchar",
+      "employee_id": "varchar",
+      "is_active": "boolean",
+      "last_login_at": "timestamp",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    },
+    "user_roles": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "role_id": "uuid",
+      "created_at": "timestamp"
+    },
+    "user_projects": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "project_id": "uuid",
+      "created_at": "timestamp"
+    },
+    "user_teams": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "team_id": "uuid",
+      "created_at": "timestamp"
+    }
+  },
+  "enums": {},
+  "schemas": {}
+}

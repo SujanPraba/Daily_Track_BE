@@ -26,8 +26,21 @@ let PermissionService = class PermissionService {
     async findAll() {
         return this.permissionRepository.findAll();
     }
+    async findAllWithModule() {
+        return this.permissionRepository.findAllWithModule();
+    }
+    async searchPermissions(searchDto) {
+        return this.permissionRepository.searchPermissions(searchDto);
+    }
     async findOne(id) {
         const permission = await this.permissionRepository.findById(id);
+        if (!permission) {
+            throw new common_1.NotFoundException('Permission not found');
+        }
+        return permission;
+    }
+    async findOneWithModule(id) {
+        const permission = await this.permissionRepository.findByIdWithModule(id);
         if (!permission) {
             throw new common_1.NotFoundException('Permission not found');
         }
@@ -41,8 +54,8 @@ let PermissionService = class PermissionService {
         const permission = await this.findOne(id);
         await this.permissionRepository.delete(id);
     }
-    async findByModule(module) {
-        return this.permissionRepository.findByModule(module);
+    async findByModuleId(moduleId) {
+        return this.permissionRepository.findByModuleId(moduleId);
     }
 };
 exports.PermissionService = PermissionService;

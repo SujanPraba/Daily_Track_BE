@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateDailyUpdateDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const optional_uuid_decorator_1 = require("../../common/decorators/optional-uuid.decorator");
 class CreateDailyUpdateDto {
 }
 exports.CreateDailyUpdateDto = CreateDailyUpdateDto;
@@ -28,9 +29,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateDailyUpdateDto.prototype, "projectId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'uuid-team-id' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUUID)(),
+    (0, optional_uuid_decorator_1.OptionalUUID)('uuid-team-id', 'ID of the team (optional)'),
     __metadata("design:type", String)
 ], CreateDailyUpdateDto.prototype, "teamId", void 0);
 __decorate([
@@ -41,13 +40,12 @@ __decorate([
 ], CreateDailyUpdateDto.prototype, "date", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        example: ['TICKET-001', 'TICKET-002'],
-        description: 'Array of ticket numbers worked on'
+        example: 'TICKET-001, TICKET-002',
+        description: 'Comma-separated ticket numbers worked on'
     }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    __metadata("design:type", Array)
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
 ], CreateDailyUpdateDto.prototype, "tickets", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '2.50' }),

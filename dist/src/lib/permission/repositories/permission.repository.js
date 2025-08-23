@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const database_module_1 = require("../../../database/database.module");
 const permission_schema_1 = require("../../../database/schemas/permission.schema");
+const module_schema_1 = require("../../../database/schemas/module.schema");
 let PermissionRepository = class PermissionRepository {
     constructor(db) {
         this.db = db;
@@ -28,6 +29,92 @@ let PermissionRepository = class PermissionRepository {
     async findAll() {
         return this.db.select().from(permission_schema_1.permissions);
     }
+    async findAllWithModule() {
+        return this.db
+            .select({
+            id: permission_schema_1.permissions.id,
+            name: permission_schema_1.permissions.name,
+            description: permission_schema_1.permissions.description,
+            moduleId: permission_schema_1.permissions.moduleId,
+            moduleName: module_schema_1.modules.name,
+            isActive: permission_schema_1.permissions.isActive,
+            createdAt: permission_schema_1.permissions.createdAt,
+            updatedAt: permission_schema_1.permissions.updatedAt,
+        })
+            .from(permission_schema_1.permissions)
+            .leftJoin(module_schema_1.modules, (0, drizzle_orm_1.eq)(permission_schema_1.permissions.moduleId, module_schema_1.modules.id));
+    }
+    async findByIdWithModule(id) {
+        const [result] = await this.db
+            .select({
+            id: permission_schema_1.permissions.id,
+            name: permission_schema_1.permissions.name,
+            description: permission_schema_1.permissions.description,
+            moduleId: permission_schema_1.permissions.moduleId,
+            moduleName: module_schema_1.modules.name,
+            isActive: permission_schema_1.permissions.isActive,
+            createdAt: permission_schema_1.permissions.createdAt,
+            updatedAt: permission_schema_1.permissions.updatedAt,
+        })
+            .from(permission_schema_1.permissions)
+            .leftJoin(module_schema_1.modules, (0, drizzle_orm_1.eq)(permission_schema_1.permissions.moduleId, module_schema_1.modules.id))
+            .where((0, drizzle_orm_1.eq)(permission_schema_1.permissions.id, id));
+        return result || null;
+    }
+    async searchPermissions(searchDto) {
+        const { searchTerm, page = 1, limit = 10, moduleId, isActive } = searchDto;
+        const offset = (page - 1) * limit;
+        const whereConditions = [];
+        if (searchTerm) {
+            whereConditions.push((0, drizzle_orm_1.or)((0, drizzle_orm_1.like)(permission_schema_1.permissions.name, `%${searchTerm}%`), (0, drizzle_orm_1.like)(module_schema_1.modules.name, `%${searchTerm}%`)));
+        }
+        if (moduleId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(permission_schema_1.permissions.moduleId, moduleId));
+        }
+        if (isActive !== undefined) {
+            whereConditions.push((0, drizzle_orm_1.eq)(permission_schema_1.permissions.isActive, isActive));
+        }
+        const countQuery = this.db
+            .select({ count: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(permission_schema_1.permissions);
+        if (whereConditions.length > 0) {
+            countQuery.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const [{ count }] = await countQuery;
+        const total = Number(count);
+        const query = this.db
+            .select({
+            id: permission_schema_1.permissions.id,
+            name: permission_schema_1.permissions.name,
+            description: permission_schema_1.permissions.description,
+            moduleId: permission_schema_1.permissions.moduleId,
+            moduleName: module_schema_1.modules.name,
+            isActive: permission_schema_1.permissions.isActive,
+            createdAt: permission_schema_1.permissions.createdAt,
+            updatedAt: permission_schema_1.permissions.updatedAt,
+        })
+            .from(permission_schema_1.permissions)
+            .leftJoin(module_schema_1.modules, (0, drizzle_orm_1.eq)(permission_schema_1.permissions.moduleId, module_schema_1.modules.id))
+            .orderBy((0, drizzle_orm_1.desc)(permission_schema_1.permissions.createdAt))
+            .limit(limit)
+            .offset(offset);
+        if (whereConditions.length > 0) {
+            query.where((0, drizzle_orm_1.and)(...whereConditions));
+        }
+        const data = await query;
+        const totalPages = Math.ceil(total / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+        return {
+            data,
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage,
+            hasPrevPage,
+        };
+    }
     async findById(id) {
         const [result] = await this.db.select().from(permission_schema_1.permissions).where((0, drizzle_orm_1.eq)(permission_schema_1.permissions.id, id));
         return result || null;
@@ -36,8 +123,8 @@ let PermissionRepository = class PermissionRepository {
         const [result] = await this.db.select().from(permission_schema_1.permissions).where((0, drizzle_orm_1.eq)(permission_schema_1.permissions.name, name));
         return result || null;
     }
-    async findByModule(module) {
-        return this.db.select().from(permission_schema_1.permissions).where((0, drizzle_orm_1.eq)(permission_schema_1.permissions.module, module));
+    async findByModuleId(moduleId) {
+        return this.db.select().from(permission_schema_1.permissions).where((0, drizzle_orm_1.eq)(permission_schema_1.permissions.moduleId, moduleId));
     }
     async update(id, permission) {
         const [result] = await this.db

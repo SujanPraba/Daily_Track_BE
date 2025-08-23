@@ -20,10 +20,17 @@ let TeamService = class TeamService {
     }
     async create(createTeamDto) {
         await this.projectService.findOne(createTeamDto.projectId);
-        return this.teamRepository.create(createTeamDto);
+        const cleanedDto = {
+            ...createTeamDto,
+            leadId: createTeamDto.leadId === '' ? undefined : createTeamDto.leadId,
+        };
+        return this.teamRepository.create(cleanedDto);
     }
     async findAll() {
         return this.teamRepository.findAll();
+    }
+    async searchTeams(searchDto) {
+        return this.teamRepository.searchTeams(searchDto);
     }
     async findOne(id) {
         const team = await this.teamRepository.findById(id);
@@ -37,7 +44,11 @@ let TeamService = class TeamService {
         if (updateTeamDto.projectId) {
             await this.projectService.findOne(updateTeamDto.projectId);
         }
-        return this.teamRepository.update(id, updateTeamDto);
+        const cleanedDto = {
+            ...updateTeamDto,
+            leadId: updateTeamDto.leadId === '' ? undefined : updateTeamDto.leadId,
+        };
+        return this.teamRepository.update(id, cleanedDto);
     }
     async remove(id) {
         const team = await this.findOne(id);

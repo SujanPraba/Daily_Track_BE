@@ -1,3 +1,4 @@
+import { ProjectRoleAssignmentDto } from './project-role-assignment.dto';
 export declare class CreateUserDto {
     firstName: string;
     lastName: string;
@@ -7,4 +8,6 @@ export declare class CreateUserDto {
     department?: string;
     position?: string;
     employeeId?: string;
+    teamId?: string;
+    projectRoleAssignments?: ProjectRoleAssignmentDto[];
 }

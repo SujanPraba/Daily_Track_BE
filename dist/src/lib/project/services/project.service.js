@@ -21,10 +21,22 @@ let ProjectService = class ProjectService {
         if (existingProject) {
             throw new common_1.BadRequestException('Project with this code already exists');
         }
-        return this.projectRepository.create(createProjectDto);
+        const cleanedDto = {
+            ...createProjectDto,
+            managerId: createProjectDto.managerId === '' ? undefined : createProjectDto.managerId,
+        };
+        const { roleIds, ...projectData } = cleanedDto;
+        const createdProject = await this.projectRepository.create(projectData);
+        if (roleIds && roleIds.length > 0) {
+            await this.projectRepository.assignRoles(createdProject.id, roleIds);
+        }
+        return this.projectRepository.findById(createdProject.id);
     }
     async findAll() {
         return this.projectRepository.findAll();
+    }
+    async searchProjects(searchDto) {
+        return this.projectRepository.searchProjects(searchDto);
     }
     async findOne(id) {
         const project = await this.projectRepository.findById(id);
@@ -35,17 +47,40 @@ let ProjectService = class ProjectService {
     }
     async update(id, updateProjectDto) {
         const project = await this.findOne(id);
-        return this.projectRepository.update(id, updateProjectDto);
+        const cleanedDto = {
+            ...updateProjectDto,
+            managerId: updateProjectDto.managerId === '' ? undefined : updateProjectDto.managerId,
+        };
+        const { roleIds, ...projectData } = cleanedDto;
+        await this.projectRepository.update(id, projectData);
+        if (roleIds !== undefined) {
+            await this.projectRepository.assignRoles(id, roleIds);
+        }
+        return this.projectRepository.findById(id);
     }
     async remove(id) {
         const project = await this.findOne(id);
         await this.projectRepository.delete(id);
+    }
+    async findAllWithPermissions() {
+        return this.projectRepository.findAllWithPermissions();
+    }
+    async getProjectUsers(projectId) {
+        return this.projectRepository.getProjectUsers(projectId);
     }
     async findByManager(managerId) {
         return this.projectRepository.findByManager(managerId);
     }
     async findByStatus(status) {
         return this.projectRepository.findByStatus(status);
+    }
+    async assignRoles(projectId, roleIds) {
+        const project = await this.findOne(projectId);
+        await this.projectRepository.assignRoles(projectId, roleIds);
+    }
+    async getProjectRoles(projectId) {
+        const project = await this.findOne(projectId);
+        return this.projectRepository.getProjectRoles(projectId);
     }
 };
 exports.ProjectService = ProjectService;

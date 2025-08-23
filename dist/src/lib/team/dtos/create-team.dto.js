@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateTeamDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const optional_uuid_decorator_1 = require("../../common/decorators/optional-uuid.decorator");
 class CreateTeamDto {
 }
 exports.CreateTeamDto = CreateTeamDto;
@@ -34,9 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateTeamDto.prototype, "projectId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'uuid-lead-id' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUUID)(),
+    (0, optional_uuid_decorator_1.OptionalUUID)('uuid-lead-id', 'ID of the team lead (optional)'),
     __metadata("design:type", String)
 ], CreateTeamDto.prototype, "leadId", void 0);
 //# sourceMappingURL=create-team.dto.js.map
