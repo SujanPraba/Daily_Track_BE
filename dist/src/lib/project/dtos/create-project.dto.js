@@ -46,15 +46,13 @@ __decorate([
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '2024-01-01T00:00:00.000Z' }),
+    (0, swagger_1.ApiProperty)({ example: '2024-01-01T00:00:00.000Z', required: false }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '2024-12-31T00:00:00.000Z' }),
+    (0, swagger_1.ApiProperty)({ example: '2024-12-31T00:00:00.000Z', required: false }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "endDate", void 0);
 __decorate([

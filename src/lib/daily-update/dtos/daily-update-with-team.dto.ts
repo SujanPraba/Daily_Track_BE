@@ -19,6 +19,9 @@ export class DailyUpdateWithTeamDto {
   @ApiProperty({ description: 'Tickets worked on' })
   tickets: string | null;
 
+  @ApiProperty({ description: 'Hours spent on tickets' })
+  ticketsHours: string;
+
   @ApiProperty({ description: 'Internal meeting hours' })
   internalMeetingHours: string;
 
@@ -30,6 +33,9 @@ export class DailyUpdateWithTeamDto {
 
   @ApiProperty({ description: 'Other activity hours' })
   otherActivityHours: string;
+
+  @ApiProperty({ description: 'Hours for leave or permission' })
+  leavePermissionHours: string;
 
   @ApiProperty({ description: 'Total hours' })
   totalHours: string;

@@ -29,6 +29,11 @@ export class CreateDailyUpdateDto {
   @IsString()
   tickets?: string;
 
+  @ApiProperty({ example: '3.50', description: 'Hours spent on tickets' })
+  @IsOptional()
+  @IsString()
+  ticketsHours?: string;
+
   @ApiProperty({ example: '2.50' })
   @IsOptional()
   @IsString()
@@ -48,6 +53,11 @@ export class CreateDailyUpdateDto {
   @IsOptional()
   @IsString()
   otherActivityHours?: string;
+
+  @ApiProperty({ example: '2.00', description: 'Hours for leave or permission' })
+  @IsOptional()
+  @IsString()
+  leavePermissionHours?: string;
 
   @ApiProperty({ example: 'Additional notes about the day' })
   @IsOptional()

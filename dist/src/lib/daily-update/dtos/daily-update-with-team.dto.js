@@ -39,6 +39,10 @@ __decorate([
     __metadata("design:type", Object)
 ], DailyUpdateWithTeamDto.prototype, "tickets", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Hours spent on tickets' }),
+    __metadata("design:type", String)
+], DailyUpdateWithTeamDto.prototype, "ticketsHours", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ description: 'Internal meeting hours' }),
     __metadata("design:type", String)
 ], DailyUpdateWithTeamDto.prototype, "internalMeetingHours", void 0);
@@ -54,6 +58,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Other activity hours' }),
     __metadata("design:type", String)
 ], DailyUpdateWithTeamDto.prototype, "otherActivityHours", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Hours for leave or permission' }),
+    __metadata("design:type", String)
+], DailyUpdateWithTeamDto.prototype, "leavePermissionHours", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Total hours' }),
     __metadata("design:type", String)

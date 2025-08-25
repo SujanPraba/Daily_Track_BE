@@ -15,7 +15,7 @@ import { DailyUpdateService } from '../services/daily-update.service';
 import { CreateDailyUpdateDto } from '../dtos/create-daily-update.dto';
 import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
 import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
-import { SearchDailyUpdatesDto } from '../dtos/search-daily-updates.dto';
+import { SearchDailyUpdatesDto, TimeTrackingDto, TimeTrackingResponseDto } from '../dtos/search-daily-updates.dto';
 import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
 import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -119,6 +119,62 @@ export class DailyUpdateController {
   @Post(':id/submit')
   submit(@Param('id') id: string) {
     return this.dailyUpdateService.submit(id);
+  }
+
+  @ApiOperation({ summary: 'Get time tracking for users with filtering options' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Time tracking data retrieved successfully',
+    type: [TimeTrackingResponseDto]
+  })
+  @Post('time-tracking')
+  async getTimeTracking(@Body() timeTrackingDto: TimeTrackingDto, @Request() req: any) {
+    console.log('Time tracking request:', timeTrackingDto);
+    
+    // Extract user ID from JWT token
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error('User ID not found in token');
+    }
+    
+    const result = await this.dailyUpdateService.getTimeTracking(timeTrackingDto, userId);
+    console.log('Time tracking result:', JSON.stringify(result, null, 2));
+    return result;
+  }
+
+  @ApiOperation({ summary: 'Test endpoint to check database content' })
+  @Get('test/db-content')
+  async testDbContent(@Request() req: any) {
+    // Extract user ID from JWT token
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error('User ID not found in token');
+    }
+    
+    // Get all daily updates to see what's in the database
+    const allUpdates = await this.dailyUpdateService.findAll();
+    console.log('All daily updates:', JSON.stringify(allUpdates, null, 2));
+    
+    // Get user's projects
+    const userProjectIds = await this.dailyUpdateService.getUserProjectIds(userId);
+    console.log('User project IDs:', userProjectIds);
+    
+    // Get user's permissions
+    const hasFullPermission = await this.dailyUpdateService.hasPermission(userId, 'VIEW_DAILY_UPDATES_FULL');
+    console.log('User has VIEW_DAILY_UPDATES_FULL permission:', hasFullPermission);
+    
+    // Get all teams
+    const teams = await this.dailyUpdateService.getTeamByProject('any-project-id');
+    console.log('Teams:', JSON.stringify(teams, null, 2));
+    
+    return {
+      currentUserId: userId,
+      hasFullPermission,
+      userProjectIds,
+      dailyUpdatesCount: allUpdates.length,
+      sampleDailyUpdate: allUpdates[0] || null,
+      teams: teams
+    };
   }
 
   @ApiOperation({ summary: 'Approve daily update' })

@@ -23,19 +23,23 @@ let DailyUpdateService = class DailyUpdateService {
     async create(createDailyUpdateDto) {
         await this.userService.findOne(createDailyUpdateDto.userId);
         await this.projectService.findOne(createDailyUpdateDto.projectId);
-        const totalHours = (parseFloat(createDailyUpdateDto.internalMeetingHours || '0') +
+        const totalHours = (parseFloat(createDailyUpdateDto.ticketsHours || '0') +
+            parseFloat(createDailyUpdateDto.internalMeetingHours || '0') +
             parseFloat(createDailyUpdateDto.externalMeetingHours || '0') +
-            parseFloat(createDailyUpdateDto.otherActivityHours || '0')).toString();
+            parseFloat(createDailyUpdateDto.otherActivityHours || '0') +
+            parseFloat(createDailyUpdateDto.leavePermissionHours || '0')).toString();
         const updateData = {
             userId: createDailyUpdateDto.userId,
             projectId: createDailyUpdateDto.projectId,
             teamId: createDailyUpdateDto.teamId || null,
             date: new Date(createDailyUpdateDto.date),
             tickets: createDailyUpdateDto.tickets || null,
+            ticketsHours: createDailyUpdateDto.ticketsHours || '0',
             internalMeetingHours: createDailyUpdateDto.internalMeetingHours || '0',
             externalMeetingHours: createDailyUpdateDto.externalMeetingHours || '0',
             otherActivities: createDailyUpdateDto.otherActivities || null,
             otherActivityHours: createDailyUpdateDto.otherActivityHours || '0',
+            leavePermissionHours: createDailyUpdateDto.leavePermissionHours || '0',
             totalHours,
             notes: createDailyUpdateDto.notes || null,
             status: 'PENDING',
@@ -67,18 +71,26 @@ let DailyUpdateService = class DailyUpdateService {
         if (updateDailyUpdateDto.date) {
             updateData.date = new Date(updateDailyUpdateDto.date);
         }
-        if (updateDailyUpdateDto.internalMeetingHours ||
+        if (updateDailyUpdateDto.ticketsHours ||
+            updateDailyUpdateDto.internalMeetingHours ||
             updateDailyUpdateDto.externalMeetingHours ||
-            updateDailyUpdateDto.otherActivityHours) {
+            updateDailyUpdateDto.otherActivityHours ||
+            updateDailyUpdateDto.leavePermissionHours) {
+            const ticketsHours = updateDailyUpdateDto.ticketsHours ||
+                (currentUpdate.ticketsHours?.toString() || '0');
             const internalHours = updateDailyUpdateDto.internalMeetingHours ||
                 (currentUpdate.internalMeetingHours?.toString() || '0');
             const externalHours = updateDailyUpdateDto.externalMeetingHours ||
                 (currentUpdate.externalMeetingHours?.toString() || '0');
             const otherHours = updateDailyUpdateDto.otherActivityHours ||
                 (currentUpdate.otherActivityHours?.toString() || '0');
-            const totalHours = (parseFloat(internalHours) +
+            const leavePermissionHours = updateDailyUpdateDto.leavePermissionHours ||
+                (currentUpdate.leavePermissionHours?.toString() || '0');
+            const totalHours = (parseFloat(ticketsHours) +
+                parseFloat(internalHours) +
                 parseFloat(externalHours) +
-                parseFloat(otherHours)).toString();
+                parseFloat(otherHours) +
+                parseFloat(leavePermissionHours)).toString();
             updateData.totalHours = totalHours;
         }
         return this.dailyUpdateRepository.update(id, updateData);
@@ -102,9 +114,24 @@ let DailyUpdateService = class DailyUpdateService {
     async searchDailyUpdates(searchDto, currentUserId) {
         const hasFullPermission = await this.userService.hasPermission(currentUserId, 'VIEW_DAILY_UPDATES_FULL');
         let projectIds = [];
-        if (!hasFullPermission) {
-            projectIds = await this.userService.getUserProjectIds(currentUserId);
-            if (projectIds.length === 0) {
+        projectIds = await this.userService.getUserProjectIds(currentUserId);
+        if (projectIds.length === 0) {
+            return {
+                data: [],
+                total: 0,
+                page: searchDto.page || 1,
+                limit: searchDto.limit || 10,
+                totalPages: 0,
+                hasNextPage: false,
+                hasPrevPage: false,
+            };
+        }
+        const searchCriteria = {};
+        if (searchDto.userId) {
+            searchCriteria.userId = searchDto.userId;
+        }
+        if (searchDto.projectId) {
+            if (!hasFullPermission && !projectIds.includes(searchDto.projectId)) {
                 return {
                     data: [],
                     total: 0,
@@ -115,12 +142,6 @@ let DailyUpdateService = class DailyUpdateService {
                     hasPrevPage: false,
                 };
             }
-        }
-        const searchCriteria = {};
-        if (searchDto.userId) {
-            searchCriteria.userId = searchDto.userId;
-        }
-        if (searchDto.projectId) {
             searchCriteria.projectId = searchDto.projectId;
         }
         else if (!hasFullPermission) {
@@ -146,17 +167,26 @@ let DailyUpdateService = class DailyUpdateService {
             this.dailyUpdateRepository.searchWithPagination(searchCriteria, limit, offset),
             this.dailyUpdateRepository.countWithCriteria(searchCriteria)
         ]);
-        const data = rawData.map(item => ({
+        let filteredData = rawData;
+        if (hasFullPermission) {
+            filteredData = rawData.filter(item => projectIds.includes(item.projectId));
+        }
+        else {
+            filteredData = rawData.filter(item => item.userId === currentUserId);
+        }
+        const data = filteredData.map(item => ({
             id: item.id,
             userId: item.userId,
             projectId: item.projectId,
             teamId: item.teamId,
             date: item.date,
             tickets: item.tickets,
+            ticketsHours: item.ticketsHours,
             internalMeetingHours: item.internalMeetingHours,
             externalMeetingHours: item.externalMeetingHours,
             otherActivities: item.otherActivities,
             otherActivityHours: item.otherActivityHours,
+            leavePermissionHours: item.leavePermissionHours,
             totalHours: item.totalHours,
             notes: item.notes,
             status: item.status,
@@ -173,7 +203,7 @@ let DailyUpdateService = class DailyUpdateService {
         const hasPrevPage = page > 1;
         return {
             data,
-            total,
+            total: filteredData.length,
             page,
             limit,
             totalPages,
@@ -206,6 +236,120 @@ let DailyUpdateService = class DailyUpdateService {
             status: 'SUBMITTED',
             submittedAt: new Date(),
         });
+    }
+    async getTimeTracking(timeTrackingDto, currentUserId) {
+        const { projectId, teamId, startDate, endDate, filterTimeBy } = timeTrackingDto;
+        console.log('Getting time tracking with criteria:', { projectId, teamId, startDate, endDate, filterTimeBy });
+        console.log('Current user ID:', currentUserId);
+        const defaultStartDate = new Date();
+        defaultStartDate.setDate(defaultStartDate.getDate() - 30);
+        const searchStartDate = startDate ? new Date(startDate) : defaultStartDate;
+        const searchEndDate = endDate ? new Date(endDate) : new Date();
+        console.log('Using date range:', { searchStartDate, searchEndDate });
+        const hasFullPermission = await this.userService.hasPermission(currentUserId, 'VIEW_DAILY_UPDATES_FULL');
+        console.log('User has VIEW_DAILY_UPDATES_FULL permission:', hasFullPermission);
+        let userProjectIds = [];
+        userProjectIds = await this.userService.getUserProjectIds(currentUserId);
+        console.log('User project IDs:', userProjectIds);
+        if (userProjectIds.length === 0) {
+            console.log('User has no projects assigned');
+            return [];
+        }
+        let searchProjectId = projectId;
+        let searchTeamId = teamId;
+        if (!projectId) {
+            searchProjectId = userProjectIds[0];
+            console.log('Restricting to user project:', searchProjectId);
+        }
+        if (projectId && !userProjectIds.includes(projectId)) {
+            console.log('User does not have access to specified project');
+            return [];
+        }
+        const dailyUpdates = await this.dailyUpdateRepository.findDailyUpdatesWithTeamInfo(searchStartDate, searchEndDate, searchProjectId, searchTeamId);
+        console.log('Raw daily updates from DB:', JSON.stringify(dailyUpdates, null, 2));
+        if (!dailyUpdates || dailyUpdates.length === 0) {
+            console.log('No daily updates found for the given criteria');
+            return [];
+        }
+        let filteredUpdates = dailyUpdates;
+        if (hasFullPermission) {
+            filteredUpdates = dailyUpdates.filter(update => userProjectIds.includes(update.projectId));
+            console.log('Full permission: showing all updates under user projects, count:', filteredUpdates.length);
+        }
+        else {
+            filteredUpdates = dailyUpdates.filter(update => update.userId === currentUserId);
+            console.log('Limited permission: showing only user updates, count:', filteredUpdates.length);
+        }
+        if (filterTimeBy === 'fullTime') {
+            return this.calculateSummaryTotals(filteredUpdates);
+        }
+        else {
+            return this.calculateDailyBreakdown(filteredUpdates);
+        }
+    }
+    async calculateSummaryTotals(dailyUpdates) {
+        const userMap = new Map();
+        for (const update of dailyUpdates) {
+            const key = `${update.userId}-${update.projectId}-${update.teamId || 'no-team'}`;
+            if (!userMap.has(key)) {
+                const user = await this.userService.findOne(update.userId);
+                const project = await this.projectService.findOne(update.projectId);
+                userMap.set(key, {
+                    userId: update.userId,
+                    userName: user.firstName + ' ' + user.lastName,
+                    projectId: update.projectId,
+                    projectName: project.name,
+                    teamId: update.teamId,
+                    teamName: update.teamName,
+                    totalInternalMeetingHours: '0',
+                    totalExternalMeetingHours: '0',
+                    totalOtherActivityHours: '0',
+                    totalTicketsHours: '0',
+                    totalLeavePermissionHours: '0',
+                    grandTotalHours: '0',
+                });
+            }
+            const userData = userMap.get(key);
+            userData.totalInternalMeetingHours = (parseFloat(userData.totalInternalMeetingHours) +
+                parseFloat(update.internalMeetingHours?.toString() || '0')).toFixed(2);
+            userData.totalExternalMeetingHours = (parseFloat(userData.totalExternalMeetingHours) +
+                parseFloat(update.externalMeetingHours?.toString() || '0')).toFixed(2);
+            userData.totalOtherActivityHours = (parseFloat(userData.totalOtherActivityHours) +
+                parseFloat(update.otherActivityHours?.toString() || '0')).toFixed(2);
+            userData.totalTicketsHours = (parseFloat(userData.totalTicketsHours) +
+                0).toFixed(2);
+            userData.totalLeavePermissionHours = (parseFloat(userData.totalLeavePermissionHours) +
+                0).toFixed(2);
+            userData.grandTotalHours = (parseFloat(userData.totalInternalMeetingHours) +
+                parseFloat(userData.totalExternalMeetingHours) +
+                parseFloat(userData.totalOtherActivityHours) +
+                parseFloat(userData.totalTicketsHours) +
+                parseFloat(userData.totalLeavePermissionHours)).toFixed(2);
+        }
+        return Array.from(userMap.values());
+    }
+    async calculateDailyBreakdown(dailyUpdates) {
+        const result = [];
+        for (const update of dailyUpdates) {
+            const user = await this.userService.findOne(update.userId);
+            const project = await this.projectService.findOne(update.projectId);
+            result.push({
+                userId: update.userId,
+                userName: user.firstName + ' ' + user.lastName,
+                projectId: update.projectId,
+                projectName: project.name,
+                teamId: update.teamId,
+                teamName: update.teamName,
+                date: update.date.toISOString().split('T')[0],
+                internalMeetingHours: update.internalMeetingHours?.toString() || '0',
+                externalMeetingHours: update.externalMeetingHours?.toString() || '0',
+                otherActivityHours: update.otherActivityHours?.toString() || '0',
+                ticketsHours: '0',
+                leavePermissionHours: '0',
+                totalHours: update.totalHours?.toString() || '0',
+            });
+        }
+        return result;
     }
 };
 exports.DailyUpdateService = DailyUpdateService;

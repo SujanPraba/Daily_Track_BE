@@ -27,14 +27,12 @@ export class CreateProjectDto {
   @IsIn(['ACTIVE', 'INACTIVE', 'COMPLETED', 'ON_HOLD'])
   status?: string;
 
-  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  @ApiProperty({ example: '2024-01-01T00:00:00.000Z', required: false })
   @IsOptional()
-  @IsDateString()
   startDate?: string;
 
-  @ApiProperty({ example: '2024-12-31T00:00:00.000Z' })
+  @ApiProperty({ example: '2024-12-31T00:00:00.000Z', required: false })
   @IsOptional()
-  @IsDateString()
   endDate?: string;
 
   @ApiProperty({ 

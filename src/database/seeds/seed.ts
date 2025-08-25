@@ -15,6 +15,7 @@ async function seed() {
   try {
     // Clear existing data to avoid conflicts
     console.log('🧹 Clearing existing data...');
+    await db.delete(schemas.dailyUpdates);
     await db.delete(schemas.userProjects);
     await db.delete(schemas.userTeams);
     await db.delete(schemas.userRoles);
@@ -26,6 +27,7 @@ async function seed() {
     await db.delete(schemas.users);
     await db.delete(schemas.modules);
     console.log('✅ Existing data cleared');
+
     // Create modules first
     const modulesData = [
       { name: 'Dashboard', description: 'Dashboard operations', code: 'DASHBOARD' },
@@ -61,8 +63,8 @@ async function seed() {
       { name: 'MANAGE_TEAM', description: 'Manage teams', moduleId: createdModules.find(m => m.code === 'TEAM')!.id },
       // Daily Updates
       { name: 'VIEW_DAILY_UPDATES', description: 'View daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
+      { name: 'VIEW_DAILY_UPDATES_FULL', description: 'View all daily updates across projects', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
       { name: 'APPROVE_UPDATES', description: 'Approve daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
-      { name: 'VIEW_DAILY_UPDATES_FULL', description: 'View daily updates full', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
       { name: 'CREATE_DAILY_UPDATES', description: 'Create daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
       { name: 'UPDATE_DAILY_UPDATES', description: 'Update daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
       { name: 'DELETE_DAILY_UPDATES', description: 'Delete daily updates', moduleId: createdModules.find(m => m.code === 'DAILY_UPDATE')!.id },
@@ -94,177 +96,295 @@ async function seed() {
     // Create roles
     const rolesData = [
       { name: 'SUPER_ADMIN', description: 'Super administrator with full access', level: 'ADMIN' },
-      { name: 'PROJECT MANAGER SINGLIFE', description: 'Project manager role', level: 'MANAGER' },
-      { name: 'TEAM_LEAD SINGLIFE', description: 'Team lead role', level: 'MANAGER' },
-      { name: 'DEVELOPER SINGLIFE', description: 'Developer role', level: 'USER' },
+      { name: 'PROJECT_MANAGER', description: 'Project manager role with full project permissions', level: 'MANAGER' },
+      { name: 'TEAM_LEAD', description: 'Team lead role with team management permissions', level: 'MANAGER' },
+      { name: 'DEVELOPER', description: 'Developer role with limited permissions', level: 'USER' },
     ];
 
     const createdRoles = await db.insert(schemas.roles).values(rolesData).returning();
     console.log('✅ Roles created');
 
-    // Assign all permissions to SUPER_ADMIN
-    const superAdminRole = createdRoles.find(role => role.name === 'SUPER_ADMIN');
-    if (superAdminRole) {
-      const rolePermissionsData = createdPermissions.map(permission => ({
-        roleId: superAdminRole.id,
-        permissionId: permission.id,
-      }));
-      await db.insert(schemas.rolePermissions).values(rolePermissionsData);
-    }
-
-    // Create sample users
+    // Create users for Singlife project
     const hashedPassword = await bcrypt.hash('password123', 12);
     const usersData = [
+      // Manager
       {
-        firstName: 'Sujan',
-        lastName: 'Praba',
-        email: 'sujan@gmail.com',
-        password: hashedPassword,
-        department: 'IT',
-        position: 'Project Developer',
-        employeeId: 'PI-IT-109',
-      },
-      {
-        firstName: 'Manager',
-        lastName: 'User',
-        email: 'manager@example.com',
+        firstName: 'Bala',
+        lastName: 'Manager',
+        email: 'bala@singlife.com',
         password: hashedPassword,
         department: 'IT',
         position: 'Project Manager',
-        employeeId: 'PI-IT-110',
+        employeeId: 'SING-001',
       },
+      // Team Lead
       {
-        firstName: 'Developer',
-        lastName: 'User',
-        email: 'developer@example.com',
+        firstName: 'Ashok',
+        lastName: 'TeamLead',
+        email: 'ashok@singlife.com',
         password: hashedPassword,
         department: 'IT',
-        position: 'Developer',
-        employeeId: 'PI-IT-111',
+        position: 'Team Lead',
+        employeeId: 'SING-002',
+      },
+      // Mobile Team
+      {
+        firstName: 'Shyaam',
+        lastName: 'Mobile',
+        email: 'shyaam@singlife.com',
+        password: hashedPassword,
+        department: 'IT',
+        position: 'Mobile Developer',
+        employeeId: 'SING-003',
+      },
+      // Web App Team
+      {
+        firstName: 'Sujan',
+        lastName: 'WebApp',
+        email: 'sujan@singlife.com',
+        password: hashedPassword,
+        department: 'IT',
+        position: 'Web Developer',
+        employeeId: 'SING-004',
+      },
+      {
+        firstName: 'Anbu',
+        lastName: 'WebApp',
+        email: 'anbu@singlife.com',
+        password: hashedPassword,
+        department: 'IT',
+        position: 'Web Developer',
+        employeeId: 'SING-005',
+      },
+      // TechOps Team
+      {
+        firstName: 'Harish',
+        lastName: 'TechOps',
+        email: 'harish@singlife.com',
+        password: hashedPassword,
+        department: 'IT',
+        position: 'DevOps Engineer',
+        employeeId: 'SING-006',
       },
     ];
 
     const createdUsers = await db.insert(schemas.users).values(usersData).returning();
     console.log('✅ Users created');
 
-    // Assign roles to users
-    const adminUser = createdUsers.find(user => user.email === 'sujan@gmail.com');
-    const managerUser = createdUsers.find(user => user.email === 'manager@example.com');
-    const devUser = createdUsers.find(user => user.email === 'developer@example.com');
-
-    const userRolesData: { userId: string; roleId: string }[] = [];
-    if (adminUser && superAdminRole) {
-      userRolesData.push({ userId: adminUser.id, roleId: superAdminRole.id });
-    }
-    if (managerUser) {
-      const pmRole = createdRoles.find(role => role.name === 'PROJECT MANAGER SINGLIFE');
-      if (pmRole) userRolesData.push({ userId: managerUser.id, roleId: pmRole.id });
-    }
-    if (devUser) {
-      const devRole = createdRoles.find(role => role.name === 'DEVELOPER SINGLIFE');
-      if (devRole) userRolesData.push({ userId: devUser.id, roleId: devRole.id });
-    }
-
-    if (userRolesData.length > 0) {
-      await db.insert(schemas.userRoles).values(userRolesData);
-    }
-
-    // Create sample projects
+    // Create projects
     const projectsData = [
       {
-        name: 'Singlife',
-        description: 'Singlife is a platform for creating and managing your own website',
+        name: 'Singlife Project',
+        description: 'Singlife project containing multiple teams',
         code: 'SINGLIFE-2025',
-        managerId: managerUser?.id,
+        managerId: createdUsers.find(u => u.email === 'bala@singlife.com')!.id,
         status: 'ACTIVE',
-        startDate: new Date('2025-01-01'),
-        endDate: new Date('2025-12-31'),
       },
-      {
-        name: 'ERL',
-        description: 'ERL is a platform for creating and managing your own website',
-        code: 'ERL-2025',
-        managerId: managerUser?.id,
-        status: 'ACTIVE',
-        startDate: new Date('2025-01-01'),
-        endDate: new Date('2025-12-31'),
-      },
-
     ];
 
     const createdProjects = await db.insert(schemas.projects).values(projectsData).returning();
     console.log('✅ Projects created');
 
-    // Create sample teams
+    // Create teams for each project
     const teamsData = [
+      // Singlife Project
       {
-        name: 'Singlife Team',
-        description: 'Team responsible for Singlife',
+        name: 'Mobile Team',
+        description: 'Mobile development team for Singlife',
         projectId: createdProjects[0].id,
-        leadId: devUser?.id,
+        leadId: createdUsers.find(u => u.email === 'shyaam@singlife.com')!.id,
       },
       {
-        name: 'ERL Team',
-        description: 'Team responsible for ERL',
-        projectId: createdProjects[1].id,
-        leadId: devUser?.id,
+        name: 'Web App Team',
+        description: 'Web application development team for Singlife',
+        projectId: createdProjects[0].id,
+        leadId: createdUsers.find(u => u.email === 'sujan@singlife.com')!.id,
+      },
+      {
+        name: 'TechOps Team',
+        description: 'DevOps and infrastructure team for Singlife',
+        projectId: createdProjects[0].id,
+        leadId: createdUsers.find(u => u.email === 'harish@singlife.com')!.id,
       },
     ];
 
     const createdTeams = await db.insert(schemas.teams).values(teamsData).returning();
     console.log('✅ Teams created');
 
-    // Assign users to projects and teams
-    if (devUser && createdProjects.length > 0 && createdTeams.length > 0) {
-      const devRole = createdRoles.find(role => role.name === 'DEVELOPER SINGLIFE');
-      if (devRole) {
-        await db.insert(schemas.userProjects).values({
-          userId: devUser.id,
-          projectId: createdProjects[0].id,
-          roleId: devRole.id,
-        });
-      }
+    // Assign roles to users
+    const userRolesData = [
+      // Singlife Project
+      { userId: createdUsers.find(u => u.email === 'bala@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'PROJECT_MANAGER')!.id },
+      { userId: createdUsers.find(u => u.email === 'ashok@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'TEAM_LEAD')!.id },
+      { userId: createdUsers.find(u => u.email === 'shyaam@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'sujan@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'anbu@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'harish@singlife.com')!.id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+    ];
 
-      await db.insert(schemas.userTeams).values({
-        userId: devUser.id,
-        teamId: createdTeams[0].id,
+    await db.insert(schemas.userRoles).values(userRolesData);
+    console.log('✅ User roles assigned');
+
+    // Assign permissions to roles
+    const rolePermissionsData: { roleId: string; permissionId: string }[] = [];
+
+    // SUPER_ADMIN gets all permissions
+    const superAdminRole = createdRoles.find(r => r.name === 'SUPER_ADMIN');
+    if (superAdminRole) {
+      createdPermissions.forEach(permission => {
+        rolePermissionsData.push({
+          roleId: superAdminRole.id,
+          permissionId: permission.id,
+        });
       });
     }
 
-    // Assign manager to projects with appropriate role
-    if (managerUser && createdProjects.length > 0) {
-      const pmRole = createdRoles.find(role => role.name === 'PROJECT MANAGER SINGLIFE');
-      if (pmRole) {
-        // Assign manager to both projects
-        for (const project of createdProjects) {
-          await db.insert(schemas.userProjects).values({
-            userId: managerUser.id,
-            projectId: project.id,
-            roleId: pmRole.id,
-          });
-        }
-      }
+    // PROJECT_MANAGER gets all permissions
+    const projectManagerRole = createdRoles.find(r => r.name === 'PROJECT_MANAGER');
+    if (projectManagerRole) {
+      createdPermissions.forEach(permission => {
+        rolePermissionsData.push({
+          roleId: projectManagerRole.id,
+          permissionId: permission.id,
+        });
+      });
     }
 
-    // Assign admin to projects with super admin role
-    if (adminUser && createdProjects.length > 0) {
-      const superAdminRole = createdRoles.find(role => role.name === 'SUPER_ADMIN');
-      if (superAdminRole) {
-        // Assign admin to first project
-        await db.insert(schemas.userProjects).values({
-          userId: adminUser.id,
-          projectId: createdProjects[0].id,
-          roleId: superAdminRole.id,
+    // TEAM_LEAD gets all permissions
+    const teamLeadRole = createdRoles.find(r => r.name === 'TEAM_LEAD');
+    if (teamLeadRole) {
+      createdPermissions.forEach(permission => {
+        rolePermissionsData.push({
+          roleId: teamLeadRole.id,
+          permissionId: permission.id,
         });
-      }
+      });
     }
+
+    // DEVELOPER gets only daily update permissions
+    const developerRole = createdRoles.find(r => r.name === 'DEVELOPER');
+    if (developerRole) {
+      const dailyUpdatePermissions = createdPermissions.filter(p =>
+        p.name.includes('DAILY_UPDATES') || p.name.includes('CREATE') || p.name.includes('UPDATE') || p.name.includes('DELETE')
+      );
+      dailyUpdatePermissions.forEach(permission => {
+        rolePermissionsData.push({
+          roleId: developerRole.id,
+          permissionId: permission.id,
+        });
+      });
+    }
+
+    await db.insert(schemas.rolePermissions).values(rolePermissionsData);
+    console.log('✅ Role permissions assigned');
+
+    // Assign users to projects
+    const userProjectsData = [
+      // Singlife Project
+      { userId: createdUsers.find(u => u.email === 'bala@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'PROJECT_MANAGER')!.id },
+      { userId: createdUsers.find(u => u.email === 'ashok@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'TEAM_LEAD')!.id },
+      { userId: createdUsers.find(u => u.email === 'shyaam@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'sujan@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'anbu@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+      { userId: createdUsers.find(u => u.email === 'harish@singlife.com')!.id, projectId: createdProjects[0].id, roleId: createdRoles.find(r => r.name === 'DEVELOPER')!.id },
+    ];
+
+    await db.insert(schemas.userProjects).values(userProjectsData);
+    console.log('✅ Users assigned to projects');
+
+    // Assign users to teams
+    const userTeamsData = [
+      // Singlife Project
+      { userId: createdUsers.find(u => u.email === 'shyaam@singlife.com')!.id, teamId: createdTeams[0].id },
+      { userId: createdUsers.find(u => u.email === 'sujan@singlife.com')!.id, teamId: createdTeams[1].id },
+      { userId: createdUsers.find(u => u.email === 'anbu@singlife.com')!.id, teamId: createdTeams[1].id },
+      { userId: createdUsers.find(u => u.email === 'harish@singlife.com')!.id, teamId: createdTeams[2].id },
+    ];
+
+    await db.insert(schemas.userTeams).values(userTeamsData);
+    console.log('✅ Users assigned to teams');
+
+    // Create sample daily updates for testing
+    const dailyUpdatesData = [
+      // Singlife Project
+      {
+        userId: createdUsers.find(u => u.email === 'shyaam@singlife.com')!.id,
+        projectId: createdProjects[0].id,
+        teamId: createdTeams[0].id,
+        date: new Date('2025-01-15'),
+        tickets: 'SINGLIFE-001',
+        ticketsHours: '4.00',
+        internalMeetingHours: '2.00',
+        externalMeetingHours: '1.00',
+        otherActivities: 'Mobile app development',
+        otherActivityHours: '3.00',
+        leavePermissionHours: '0.00',
+        totalHours: '10.00',
+        notes: 'Completed mobile app features',
+        status: 'APPROVED',
+        submittedAt: new Date('2025-01-15T18:00:00Z'),
+        approvedAt: new Date('2025-01-16T09:00:00Z'),
+        approvedBy: createdUsers.find(u => u.email === 'ashok@singlife.com')!.id,
+      },
+      {
+        userId: createdUsers.find(u => u.email === 'sujan@singlife.com')!.id,
+        projectId: createdProjects[0].id,
+        teamId: createdTeams[1].id,
+        date: new Date('2025-01-15'),
+        tickets: 'SINGLIFE-002',
+        ticketsHours: '3.50',
+        internalMeetingHours: '1.50',
+        externalMeetingHours: '0.50',
+        otherActivities: 'Web app development',
+        otherActivityHours: '4.00',
+        leavePermissionHours: '0.00',
+        totalHours: '9.50',
+        notes: 'Implemented user authentication',
+        status: 'APPROVED',
+        submittedAt: new Date('2025-01-15T18:00:00Z'),
+        approvedAt: new Date('2025-01-16T09:00:00Z'),
+        approvedBy: createdUsers.find(u => u.email === 'ashok@singlife.com')!.id,
+      },
+      {
+        userId: createdUsers.find(u => u.email === 'anbu@singlife.com')!.id,
+        projectId: createdProjects[0].id,
+        teamId: createdTeams[1].id,
+        date: new Date('2025-01-15'),
+        tickets: 'SINGLIFE-003',
+        ticketsHours: '2.00',
+        internalMeetingHours: '1.00',
+        externalMeetingHours: '2.00',
+        otherActivities: 'DevOps tasks',
+        otherActivityHours: '3.00',
+        leavePermissionHours: '0.00',
+        totalHours: '8.00',
+        notes: 'Deployed new version of web app',
+        status: 'APPROVED',
+        submittedAt: new Date('2025-01-15T18:00:00Z'),
+        approvedAt: new Date('2025-01-16T09:00:00Z'),
+        approvedBy: createdUsers.find(u => u.email === 'harish@singlife.com')!.id,
+      },
+    ];
+
+    await db.insert(schemas.dailyUpdates).values(dailyUpdatesData);
+    console.log('✅ Sample daily updates created');
 
     console.log('🎉 Database seeding completed successfully!');
     console.log('');
-    console.log('Sample credentials:');
-    console.log('Admin: sujan@gmail.com / password123');
-    console.log('Manager: manager@example.com / password123');
-    console.log('Developer: developer@example.com / password123');
+    console.log('📋 Project Structure:');
+    console.log('1. Singlife Project (SINGLIFE-2025)');
+    console.log('   - Manager: Bala Manager (bala@singlife.com)');
+    console.log('   - Team Lead: Ashok TeamLead (ashok@singlife.com)');
+    console.log('   - Mobile Team: Shyaam Mobile (shyaam@singlife.com)');
+    console.log('   - Web App Team: Sujan WebApp (sujan@singlife.com), Anbu WebApp (anbu@singlife.com)');
+    console.log('   - TechOps Team: Harish TechOps (harish@singlife.com)');
+    console.log('');
+    console.log('🔑 Sample credentials (all users):');
+    console.log('Email: [user-email] / Password: password123');
+    console.log('');
+    console.log('📊 Permission Structure:');
+    console.log('- Manager & Team Lead: All permissions (including VIEW_DAILY_UPDATES_FULL)');
+    console.log('- Developers: Only daily update permissions (VIEW_DAILY_UPDATES)');
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);

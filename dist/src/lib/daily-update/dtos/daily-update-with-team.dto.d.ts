@@ -5,10 +5,12 @@ export declare class DailyUpdateWithTeamDto {
     teamId: string | null;
     date: Date;
     tickets: string | null;
+    ticketsHours: string;
     internalMeetingHours: string;
     externalMeetingHours: string;
     otherActivities: string | null;
     otherActivityHours: string;
+    leavePermissionHours: string;
     totalHours: string;
     notes: string | null;
     status: string;

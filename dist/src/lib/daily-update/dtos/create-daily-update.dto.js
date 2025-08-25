@@ -48,6 +48,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreateDailyUpdateDto.prototype, "tickets", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '3.50', description: 'Hours spent on tickets' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateDailyUpdateDto.prototype, "ticketsHours", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ example: '2.50' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -71,6 +77,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateDailyUpdateDto.prototype, "otherActivityHours", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '2.00', description: 'Hours for leave or permission' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateDailyUpdateDto.prototype, "leavePermissionHours", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Additional notes about the day' }),
     (0, class_validator_1.IsOptional)(),

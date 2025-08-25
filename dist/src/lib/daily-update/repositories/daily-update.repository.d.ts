@@ -18,4 +18,10 @@ export declare class DailyUpdateRepository {
         name: string;
         description: string | null;
     } | null>;
+    getTeamById(teamId: string): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+    } | null>;
+    findDailyUpdatesWithTeamInfo(startDate: Date, endDate: Date, projectId?: string, teamId?: string): Promise<any[]>;
 }

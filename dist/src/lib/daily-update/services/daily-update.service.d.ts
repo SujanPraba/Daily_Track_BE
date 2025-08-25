@@ -30,4 +30,7 @@ export declare class DailyUpdateService {
     } | null>;
     approve(id: string, approverId: string): Promise<DailyUpdate>;
     submit(id: string): Promise<DailyUpdate>;
+    getTimeTracking(timeTrackingDto: any, currentUserId: string): Promise<any[]>;
+    private calculateSummaryTotals;
+    private calculateDailyBreakdown;
 }

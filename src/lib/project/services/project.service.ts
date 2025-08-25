@@ -26,8 +26,22 @@ export class ProjectService {
     // Extract roleIds from the DTO
     const { roleIds, ...projectData } = cleanedDto;
 
+    // Convert string dates to Date objects only if they are provided
+    const processedProjectData: any = { ...projectData };
+    
+    if (projectData.startDate && projectData.startDate.trim() !== '') {
+      processedProjectData.startDate = new Date(projectData.startDate);
+    } else {
+      processedProjectData.startDate = undefined;
+    }
+    if (projectData.endDate && projectData.endDate.trim() !== '') {
+      processedProjectData.endDate = new Date(projectData.endDate);
+    } else {
+      processedProjectData.endDate = undefined;
+    }
+
     // Create the project first
-    const createdProject = await this.projectRepository.create(projectData as any);
+    const createdProject = await this.projectRepository.create(processedProjectData as any);
 
     // If roleIds are provided, assign them to the project
     if (roleIds && roleIds.length > 0) {
@@ -66,8 +80,22 @@ export class ProjectService {
     // Extract roleIds from the DTO
     const { roleIds, ...projectData } = cleanedDto;
 
+    // Convert string dates to Date objects only if they are provided
+    const processedProjectData: any = { ...projectData };
+    
+    if (projectData.startDate && projectData.startDate.trim() !== '') {
+      processedProjectData.startDate = new Date(projectData.startDate);
+    } else {
+      processedProjectData.startDate = undefined;
+    }
+    if (projectData.endDate && projectData.endDate.trim() !== '') {
+      processedProjectData.endDate = new Date(projectData.endDate);
+    } else {
+      processedProjectData.endDate = undefined;
+    }
+
     // Update the project first
-    await this.projectRepository.update(id, projectData as any);
+    await this.projectRepository.update(id, processedProjectData as any);
     
     // If roleIds are provided, update the role assignments
     if (roleIds !== undefined) {

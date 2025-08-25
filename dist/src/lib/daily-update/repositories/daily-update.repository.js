@@ -93,10 +93,12 @@ let DailyUpdateRepository = class DailyUpdateRepository {
             teamId: daily_update_schema_1.dailyUpdates.teamId,
             date: daily_update_schema_1.dailyUpdates.date,
             tickets: daily_update_schema_1.dailyUpdates.tickets,
+            ticketsHours: daily_update_schema_1.dailyUpdates.ticketsHours,
             internalMeetingHours: daily_update_schema_1.dailyUpdates.internalMeetingHours,
             externalMeetingHours: daily_update_schema_1.dailyUpdates.externalMeetingHours,
             otherActivities: daily_update_schema_1.dailyUpdates.otherActivities,
             otherActivityHours: daily_update_schema_1.dailyUpdates.otherActivityHours,
+            leavePermissionHours: daily_update_schema_1.dailyUpdates.leavePermissionHours,
             totalHours: daily_update_schema_1.dailyUpdates.totalHours,
             notes: daily_update_schema_1.dailyUpdates.notes,
             status: daily_update_schema_1.dailyUpdates.status,
@@ -158,6 +160,56 @@ let DailyUpdateRepository = class DailyUpdateRepository {
             .from(team_schema_1.teams)
             .where((0, drizzle_orm_1.eq)(team_schema_1.teams.projectId, projectId));
         return result || null;
+    }
+    async getTeamById(teamId) {
+        const [result] = await this.db
+            .select({
+            id: team_schema_1.teams.id,
+            name: team_schema_1.teams.name,
+            description: team_schema_1.teams.description,
+        })
+            .from(team_schema_1.teams)
+            .where((0, drizzle_orm_1.eq)(team_schema_1.teams.id, teamId));
+        return result || null;
+    }
+    async findDailyUpdatesWithTeamInfo(startDate, endDate, projectId, teamId) {
+        let whereConditions = [
+            (0, drizzle_orm_1.gte)(daily_update_schema_1.dailyUpdates.date, startDate),
+            (0, drizzle_orm_1.lte)(daily_update_schema_1.dailyUpdates.date, endDate)
+        ];
+        if (projectId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.projectId, projectId));
+        }
+        if (teamId) {
+            whereConditions.push((0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.teamId, teamId));
+        }
+        return this.db
+            .select({
+            id: daily_update_schema_1.dailyUpdates.id,
+            userId: daily_update_schema_1.dailyUpdates.userId,
+            projectId: daily_update_schema_1.dailyUpdates.projectId,
+            teamId: daily_update_schema_1.dailyUpdates.teamId,
+            date: daily_update_schema_1.dailyUpdates.date,
+            tickets: daily_update_schema_1.dailyUpdates.tickets,
+            internalMeetingHours: daily_update_schema_1.dailyUpdates.internalMeetingHours,
+            externalMeetingHours: daily_update_schema_1.dailyUpdates.externalMeetingHours,
+            otherActivities: daily_update_schema_1.dailyUpdates.otherActivities,
+            otherActivityHours: daily_update_schema_1.dailyUpdates.otherActivityHours,
+            totalHours: daily_update_schema_1.dailyUpdates.totalHours,
+            notes: daily_update_schema_1.dailyUpdates.notes,
+            status: daily_update_schema_1.dailyUpdates.status,
+            submittedAt: daily_update_schema_1.dailyUpdates.submittedAt,
+            approvedAt: daily_update_schema_1.dailyUpdates.approvedAt,
+            approvedBy: daily_update_schema_1.dailyUpdates.approvedBy,
+            createdAt: daily_update_schema_1.dailyUpdates.createdAt,
+            updatedAt: daily_update_schema_1.dailyUpdates.updatedAt,
+            teamName: team_schema_1.teams.name,
+            teamDescription: team_schema_1.teams.description,
+        })
+            .from(daily_update_schema_1.dailyUpdates)
+            .leftJoin(team_schema_1.teams, (0, drizzle_orm_1.eq)(daily_update_schema_1.dailyUpdates.teamId, team_schema_1.teams.id))
+            .where((0, drizzle_orm_1.and)(...whereConditions))
+            .orderBy((0, drizzle_orm_1.desc)(daily_update_schema_1.dailyUpdates.date));
     }
 };
 exports.DailyUpdateRepository = DailyUpdateRepository;

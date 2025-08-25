@@ -1,0 +1,30 @@
+{
+  "id": "0004_add_tickets_and_leave_hours",
+  "prevId": "0003_update_tickets_to_text",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "daily_updates": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "project_id": "uuid",
+      "team_id": "uuid",
+      "date": "timestamp",
+      "tickets": "text",
+      "tickets_hours": "numeric",
+      "internal_meeting_hours": "numeric",
+      "external_meeting_hours": "numeric",
+      "other_activities": "text",
+      "other_activity_hours": "numeric",
+      "leave_permission_hours": "numeric",
+      "total_hours": "numeric",
+      "notes": "text",
+      "status": "varchar",
+      "submitted_at": "timestamp",
+      "approved_at": "timestamp",
+      "approved_by": "uuid",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  }
+}

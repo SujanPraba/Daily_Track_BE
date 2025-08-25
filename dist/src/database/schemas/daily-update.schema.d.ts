@@ -74,6 +74,18 @@ export declare const dailyUpdates: import("drizzle-orm/pg-core").PgTableWithColu
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
+        ticketsHours: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tickets_hours";
+            tableName: "daily_updates";
+            dataType: "string";
+            columnType: "PgNumeric";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: true;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
         internalMeetingHours: import("drizzle-orm/pg-core").PgColumn<{
             name: "internal_meeting_hours";
             tableName: "daily_updates";
@@ -112,6 +124,18 @@ export declare const dailyUpdates: import("drizzle-orm/pg-core").PgTableWithColu
         }, {}, {}>;
         otherActivityHours: import("drizzle-orm/pg-core").PgColumn<{
             name: "other_activity_hours";
+            tableName: "daily_updates";
+            dataType: "string";
+            columnType: "PgNumeric";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: true;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
+        leavePermissionHours: import("drizzle-orm/pg-core").PgColumn<{
+            name: "leave_permission_hours";
             tableName: "daily_updates";
             dataType: "string";
             columnType: "PgNumeric";

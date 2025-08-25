@@ -15,6 +15,27 @@
       "when": 1755847000767,
       "tag": "0001_mighty_slapstick",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1755847000768,
+      "tag": "0002_update_permissions_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1755847000769,
+      "tag": "0003_update_tickets_to_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1755847000770,
+      "tag": "0004_add_tickets_and_leave_hours",
+      "breakpoints": true
     }
   ]
 }

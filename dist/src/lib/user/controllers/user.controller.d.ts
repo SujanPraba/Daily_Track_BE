@@ -11,9 +11,6 @@ export declare class UserController {
     constructor(userService: UserService);
     create(createUserDto: CreateUserDto): Promise<{
         id: string;
-        isActive: boolean | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
         firstName: string;
         lastName: string;
         email: string;
@@ -22,7 +19,10 @@ export declare class UserController {
         department: string | null;
         position: string | null;
         employeeId: string | null;
+        isActive: boolean | null;
         lastLoginAt: Date | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
     }>;
     findAll(): Promise<import("../dtos/user-with-assignments.dto").UserWithAssignmentsDto[]>;
     findUserWithCompleteInformation(id: string): Promise<any>;
@@ -30,9 +30,6 @@ export declare class UserController {
     findOne(id: string): Promise<import("../dtos/user-with-assignments.dto").UserWithAssignmentsDto>;
     update(id: string, updateUserDto: UpdateUserDto): Promise<{
         id: string;
-        isActive: boolean | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
         firstName: string;
         lastName: string;
         email: string;
@@ -41,7 +38,10 @@ export declare class UserController {
         department: string | null;
         position: string | null;
         employeeId: string | null;
+        isActive: boolean | null;
         lastLoginAt: Date | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
     }>;
     remove(id: string): Promise<void>;
     assignProjectRoles(id: string, assignProjectRolesDto: AssignProjectRolesDto): Promise<void>;

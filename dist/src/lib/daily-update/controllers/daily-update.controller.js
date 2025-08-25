@@ -68,6 +68,38 @@ let DailyUpdateController = class DailyUpdateController {
     submit(id) {
         return this.dailyUpdateService.submit(id);
     }
+    async getTimeTracking(timeTrackingDto, req) {
+        console.log('Time tracking request:', timeTrackingDto);
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new Error('User ID not found in token');
+        }
+        const result = await this.dailyUpdateService.getTimeTracking(timeTrackingDto, userId);
+        console.log('Time tracking result:', JSON.stringify(result, null, 2));
+        return result;
+    }
+    async testDbContent(req) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new Error('User ID not found in token');
+        }
+        const allUpdates = await this.dailyUpdateService.findAll();
+        console.log('All daily updates:', JSON.stringify(allUpdates, null, 2));
+        const userProjectIds = await this.dailyUpdateService.getUserProjectIds(userId);
+        console.log('User project IDs:', userProjectIds);
+        const hasFullPermission = await this.dailyUpdateService.hasPermission(userId, 'VIEW_DAILY_UPDATES_FULL');
+        console.log('User has VIEW_DAILY_UPDATES_FULL permission:', hasFullPermission);
+        const teams = await this.dailyUpdateService.getTeamByProject('any-project-id');
+        console.log('Teams:', JSON.stringify(teams, null, 2));
+        return {
+            currentUserId: userId,
+            hasFullPermission,
+            userProjectIds,
+            dailyUpdatesCount: allUpdates.length,
+            sampleDailyUpdate: allUpdates[0] || null,
+            teams: teams
+        };
+    }
     approve(id, approveDailyUpdateDto) {
         return this.dailyUpdateService.approve(id, approveDailyUpdateDto.approverId);
     }
@@ -153,6 +185,28 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], DailyUpdateController.prototype, "submit", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Get time tracking for users with filtering options' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Time tracking data retrieved successfully',
+        type: [search_daily_updates_dto_1.TimeTrackingResponseDto]
+    }),
+    (0, common_1.Post)('time-tracking'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [search_daily_updates_dto_1.TimeTrackingDto, Object]),
+    __metadata("design:returntype", Promise)
+], DailyUpdateController.prototype, "getTimeTracking", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Test endpoint to check database content' }),
+    (0, common_1.Get)('test/db-content'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], DailyUpdateController.prototype, "testDbContent", null);
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Approve daily update' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Daily update approved successfully' }),

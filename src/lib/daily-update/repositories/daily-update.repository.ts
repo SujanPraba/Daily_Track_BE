@@ -107,10 +107,12 @@ export class DailyUpdateRepository {
         teamId: dailyUpdates.teamId,
         date: dailyUpdates.date,
         tickets: dailyUpdates.tickets,
+        ticketsHours: dailyUpdates.ticketsHours,
         internalMeetingHours: dailyUpdates.internalMeetingHours,
         externalMeetingHours: dailyUpdates.externalMeetingHours,
         otherActivities: dailyUpdates.otherActivities,
         otherActivityHours: dailyUpdates.otherActivityHours,
+        leavePermissionHours: dailyUpdates.leavePermissionHours,
         totalHours: dailyUpdates.totalHours,
         notes: dailyUpdates.notes,
         status: dailyUpdates.status,
@@ -188,5 +190,63 @@ export class DailyUpdateRepository {
       .where(eq(teams.projectId, projectId));
 
     return result || null;
+  }
+
+  async getTeamById(teamId: string): Promise<{ id: string; name: string; description: string | null } | null> {
+    const [result] = await this.db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        description: teams.description,
+      })
+      .from(teams)
+      .where(eq(teams.id, teamId));
+
+    return result || null;
+  }
+
+  async findDailyUpdatesWithTeamInfo(startDate: Date, endDate: Date, projectId?: string, teamId?: string): Promise<any[]> {
+    let whereConditions: any[] = [
+      gte(dailyUpdates.date, startDate),
+      lte(dailyUpdates.date, endDate)
+    ];
+
+    if (projectId) {
+      whereConditions.push(eq(dailyUpdates.projectId, projectId));
+    }
+
+    if (teamId) {
+      whereConditions.push(eq(dailyUpdates.teamId, teamId));
+    }
+
+    return this.db
+      .select({
+        id: dailyUpdates.id,
+        userId: dailyUpdates.userId,
+        projectId: dailyUpdates.projectId,
+        teamId: dailyUpdates.teamId,
+        date: dailyUpdates.date,
+        tickets: dailyUpdates.tickets,
+        // ticketsHours: dailyUpdates.ticketsHours, // Temporarily commented out until migration is run
+        internalMeetingHours: dailyUpdates.internalMeetingHours,
+        externalMeetingHours: dailyUpdates.externalMeetingHours,
+        otherActivities: dailyUpdates.otherActivities,
+        otherActivityHours: dailyUpdates.otherActivityHours,
+        // leavePermissionHours: dailyUpdates.leavePermissionHours, // Temporarily commented out until migration is run
+        totalHours: dailyUpdates.totalHours,
+        notes: dailyUpdates.notes,
+        status: dailyUpdates.status,
+        submittedAt: dailyUpdates.submittedAt,
+        approvedAt: dailyUpdates.approvedAt,
+        approvedBy: dailyUpdates.approvedBy,
+        createdAt: dailyUpdates.createdAt,
+        updatedAt: dailyUpdates.updatedAt,
+        teamName: teams.name,
+        teamDescription: teams.description,
+      })
+      .from(dailyUpdates)
+      .leftJoin(teams, eq(dailyUpdates.teamId, teams.id))
+      .where(and(...whereConditions))
+      .orderBy(desc(dailyUpdates.date));
   }
 }
