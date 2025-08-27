@@ -93,15 +93,15 @@ export class DailyUpdateService {
       updateDailyUpdateDto.otherActivityHours ||
       updateDailyUpdateDto.leavePermissionHours
     ) {
-      const ticketsHours = updateDailyUpdateDto.ticketsHours || 
+      const ticketsHours = updateDailyUpdateDto.ticketsHours ||
         (currentUpdate.ticketsHours?.toString() || '0');
-      const internalHours = updateDailyUpdateDto.internalMeetingHours || 
+      const internalHours = updateDailyUpdateDto.internalMeetingHours ||
         (currentUpdate.internalMeetingHours?.toString() || '0');
-      const externalHours = updateDailyUpdateDto.externalMeetingHours || 
+      const externalHours = updateDailyUpdateDto.externalMeetingHours ||
         (currentUpdate.externalMeetingHours?.toString() || '0');
-      const otherHours = updateDailyUpdateDto.otherActivityHours || 
+      const otherHours = updateDailyUpdateDto.otherActivityHours ||
         (currentUpdate.otherActivityHours?.toString() || '0');
-      const leavePermissionHours = updateDailyUpdateDto.leavePermissionHours || 
+      const leavePermissionHours = updateDailyUpdateDto.leavePermissionHours ||
         (currentUpdate.leavePermissionHours?.toString() || '0');
 
       const totalHours = (
@@ -143,19 +143,45 @@ export class DailyUpdateService {
     searchDto: SearchDailyUpdatesDto,
     currentUserId: string
   ): Promise<PaginatedDailyUpdatesDto> {
+    console.log(`🔍 Search request from user ${currentUserId} with criteria:`, searchDto);
+
     // Check if user has VIEW_DAILY_UPDATES_FULL permission
     const hasFullPermission = await this.userService.hasPermission(
       currentUserId,
       'VIEW_DAILY_UPDATES_FULL'
     );
 
+    // Check if user has basic VIEW_DAILY_UPDATES permission
+    const hasBasicPermission = await this.userService.hasPermission(
+      currentUserId,
+      'VIEW_DAILY_UPDATES'
+    );
+
+    console.log(`🔐 User permissions - VIEW_DAILY_UPDATES_FULL: ${hasFullPermission}, VIEW_DAILY_UPDATES: ${hasBasicPermission}`);
+
+    if (!hasBasicPermission && !hasFullPermission) {
+      console.log(`❌ User ${currentUserId} has no permission to view daily updates`);
+      // User has no permission to view daily updates
+      return {
+        data: [],
+        total: 0,
+        page: searchDto.page || 1,
+        limit: searchDto.limit || 10,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      };
+    }
+
     let projectIds: string[] = [];
-    
+
     // Get user's project IDs
     projectIds = await this.userService.getUserProjectIds(currentUserId);
-    
+    console.log(`📋 User ${currentUserId} has access to projects:`, projectIds);
+
     // If user has no projects, return empty result
     if (projectIds.length === 0) {
+      console.log(`❌ User ${currentUserId} has no projects assigned`);
       return {
         data: [],
         total: 0,
@@ -169,14 +195,32 @@ export class DailyUpdateService {
 
     // Build search criteria
     const searchCriteria: any = {};
-    
+
+    // Handle userId filter based on permissions
     if (searchDto.userId) {
-      searchCriteria.userId = searchDto.userId;
+      if (hasFullPermission) {
+        // Users with VIEW_DAILY_UPDATES_FULL can filter by any user within their projects
+        searchCriteria.userId = searchDto.userId;
+        console.log(`✅ User with VIEW_DAILY_UPDATES_FULL can filter by userId: ${searchDto.userId}`);
+      } else {
+        // Users with only VIEW_DAILY_UPDATES can only see their own updates
+        // If they try to filter by another user, ignore the filter and show only their own
+        searchCriteria.userId = currentUserId;
+        console.log(`⚠️ User with only VIEW_DAILY_UPDATES - ignoring requested userId ${searchDto.userId}, showing own updates only`);
+      }
+    } else if (!hasFullPermission) {
+      // If no userId specified and user doesn't have full permission,
+      // restrict to their own updates
+      searchCriteria.userId = currentUserId;
+      console.log(`🔒 User without VIEW_DAILY_UPDATES_FULL - restricting to own updates only`);
     }
-    
+    // Note: If user has VIEW_DAILY_UPDATES_FULL and no userId specified,
+    // we don't add userId filter, allowing them to see all updates
+
     if (searchDto.projectId) {
       // If user doesn't have full permission and specified project is not in their projects, return empty
       if (!hasFullPermission && !projectIds.includes(searchDto.projectId)) {
+        console.log(`❌ User ${currentUserId} tried to access project ${searchDto.projectId} without permission`);
         return {
           data: [],
           total: 0,
@@ -188,32 +232,46 @@ export class DailyUpdateService {
         };
       }
       searchCriteria.projectId = searchDto.projectId;
+      console.log(`✅ Project filter applied: ${searchDto.projectId}`);
     } else if (!hasFullPermission) {
       // If no specific project filter and user doesn't have full permission, 
       // restrict to their projects
       searchCriteria.projectId = projectIds;
+      console.log(`🔒 Restricting to user's projects:`, projectIds);
     }
+    // Note: If user has VIEW_DAILY_UPDATES_FULL and no projectId specified,
+    // we don't add projectId filter, allowing them to see updates from all their projects
     
     if (searchDto.teamId) {
       searchCriteria.teamId = searchDto.teamId;
+      console.log(`✅ Team filter applied: ${searchDto.teamId}`);
     }
     
     if (searchDto.status) {
       searchCriteria.status = searchDto.status;
+      console.log(`✅ Status filter applied: ${searchDto.status}`);
     }
     
     if (searchDto.tickets) {
       searchCriteria.tickets = searchDto.tickets;
+      console.log(`✅ Tickets filter applied: ${searchDto.tickets}`);
     }
     
     if (searchDto.startDate && searchDto.endDate) {
       searchCriteria.startDate = new Date(searchDto.startDate);
       searchCriteria.endDate = new Date(searchDto.endDate);
+      console.log(`✅ Date range filter applied: ${searchDto.startDate} to ${searchDto.endDate}`);
     }
+
+    console.log(`🔍 Final search criteria:`, searchCriteria);
+    console.log(`🔐 Permission summary - hasFullPermission: ${hasFullPermission}, hasBasicPermission: ${hasBasicPermission}`);
+    console.log(`📋 User project IDs: ${projectIds.join(', ')}`);
 
     const page = searchDto.page || 1;
     const limit = searchDto.limit || 10;
     const offset = (page - 1) * limit;
+
+    console.log(`📄 Pagination - page: ${page}, limit: ${limit}, offset: ${offset}`);
 
     // Get paginated results
     const [rawData, total] = await Promise.all([
@@ -221,7 +279,17 @@ export class DailyUpdateService {
       this.dailyUpdateRepository.countWithCriteria(searchCriteria)
     ]);
 
-    // Filter results based on permissions
+    console.log(`📊 Raw data count: ${rawData.length}, Total count: ${total}`);
+    if (rawData.length > 0) {
+      console.log(`📝 Sample raw data:`, {
+        id: rawData[0].id,
+        userId: rawData[0].userId,
+        projectId: rawData[0].projectId,
+        teamId: rawData[0].teamId
+      });
+    }
+
+    // Additional filtering based on permissions (double-check for security)
     let filteredData = rawData;
     
     if (hasFullPermission) {
@@ -229,11 +297,13 @@ export class DailyUpdateService {
       filteredData = rawData.filter(item => 
         projectIds.includes(item.projectId)
       );
+      console.log(`👁️ VIEW_DAILY_UPDATES_FULL: Showing ${filteredData.length} updates across user's projects`);
     } else {
       // VIEW_DAILY_UPDATES: Show only user's own updates
       filteredData = rawData.filter(item => 
         item.userId === currentUserId
       );
+      console.log(`👤 VIEW_DAILY_UPDATES: Showing ${filteredData.length} updates for user ${currentUserId} only`);
     }
 
     // Transform the filtered data to match the DTO structure
@@ -262,9 +332,11 @@ export class DailyUpdateService {
       teamDescription: item.teamDescription,
     }));
 
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(filteredData.length / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
+
+    console.log(`✅ Search completed - Returning ${filteredData.length} results, page ${page}/${totalPages}`);
 
     return {
       data,

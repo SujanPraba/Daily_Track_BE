@@ -62,30 +62,39 @@ export class DailyUpdateRepository {
     limit: number,
     offset: number
   ): Promise<any[]> {
+    console.log(`🔍 Repository searchWithPagination called with criteria:`, criteria);
+    console.log(`📊 Pagination - limit: ${limit}, offset: ${offset}`);
+
     let whereConditions: any[] = [];
 
     if (criteria.userId) {
       whereConditions.push(eq(dailyUpdates.userId, criteria.userId));
+      console.log(`✅ Added userId filter: ${criteria.userId}`);
     }
 
     if (criteria.projectId) {
       if (Array.isArray(criteria.projectId)) {
         whereConditions.push(inArray(dailyUpdates.projectId, criteria.projectId));
+        console.log(`✅ Added projectId array filter:`, criteria.projectId);
       } else {
         whereConditions.push(eq(dailyUpdates.projectId, criteria.projectId));
+        console.log(`✅ Added projectId filter: ${criteria.projectId}`);
       }
     }
 
     if (criteria.teamId) {
       whereConditions.push(eq(dailyUpdates.teamId, criteria.teamId));
+      console.log(`✅ Added teamId filter: ${criteria.teamId}`);
     }
 
     if (criteria.status) {
       whereConditions.push(eq(dailyUpdates.status, criteria.status));
+      console.log(`✅ Added status filter: ${criteria.status}`);
     }
 
     if (criteria.tickets) {
       whereConditions.push(sql`${dailyUpdates.tickets}::text ILIKE ${`%${criteria.tickets}%`}`);
+      console.log(`✅ Added tickets filter: ${criteria.tickets}`);
     }
 
     if (criteria.startDate && criteria.endDate) {
@@ -95,11 +104,13 @@ export class DailyUpdateRepository {
           lte(dailyUpdates.date, criteria.endDate)
         )
       );
+      console.log(`✅ Added date range filter: ${criteria.startDate} to ${criteria.endDate}`);
     }
 
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    console.log(`🔍 Final where clause:`, whereConditions.length > 0 ? 'Has conditions' : 'No conditions');
 
-    return this.db
+    const result = await this.db
       .select({
         id: dailyUpdates.id,
         userId: dailyUpdates.userId,
@@ -125,11 +136,24 @@ export class DailyUpdateRepository {
         teamDescription: teams.description,
       })
       .from(dailyUpdates)
-      .leftJoin(teams, eq(dailyUpdates.projectId, teams.projectId))
+      .leftJoin(teams, eq(dailyUpdates.teamId, teams.id))
       .where(whereClause)
       .orderBy(desc(dailyUpdates.createdAt))
       .limit(limit)
       .offset(offset);
+
+    console.log(`📊 Repository query returned ${result.length} results`);
+    if (result.length > 0) {
+      console.log(`📝 Sample result:`, {
+        id: result[0].id,
+        userId: result[0].userId,
+        projectId: result[0].projectId,
+        teamId: result[0].teamId,
+        teamName: result[0].teamName
+      });
+    }
+
+    return result;
   }
 
   async countWithCriteria(criteria: any): Promise<number> {
@@ -173,7 +197,7 @@ export class DailyUpdateRepository {
     const result = await this.db
       .select({ count: sql`count(*)` })
       .from(dailyUpdates)
-      .leftJoin(teams, eq(dailyUpdates.projectId, teams.projectId))
+      .leftJoin(teams, eq(dailyUpdates.teamId, teams.id))
       .where(whereClause);
 
     return Number(result[0]?.count || 0);

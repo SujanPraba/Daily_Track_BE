@@ -3,6 +3,27 @@ import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as schemas from '../schemas';
 
+/**
+ * Database Seeding with Permission Logic
+ *
+ * Permission Structure for Daily Updates:
+ *
+ * VIEW_DAILY_UPDATES_FULL:
+ * - Users can see ALL daily updates across their assigned projects
+ * - Can filter by any user, team, or project they have access to
+ * - Assigned to: SUPER_ADMIN, PROJECT_MANAGER, TEAM_LEAD roles
+ *
+ * VIEW_DAILY_UPDATES:
+ * - Users can only see their OWN daily updates
+ * - userId filters are ignored and restricted to current user
+ * - Assigned to: DEVELOPER role
+ *
+ * This creates a hierarchical access control where:
+ * - Managers and Team Leads have full oversight
+ * - Developers can only see their own work
+ * - All users are restricted to projects they're assigned to
+ */
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
@@ -239,7 +260,7 @@ async function seed() {
       });
     }
 
-    // PROJECT_MANAGER gets all permissions
+    // PROJECT_MANAGER gets all permissions (including VIEW_DAILY_UPDATES_FULL)
     const projectManagerRole = createdRoles.find(r => r.name === 'PROJECT_MANAGER');
     if (projectManagerRole) {
       createdPermissions.forEach(permission => {
@@ -250,7 +271,7 @@ async function seed() {
       });
     }
 
-    // TEAM_LEAD gets all permissions
+    // TEAM_LEAD gets all permissions (including VIEW_DAILY_UPDATES_FULL)
     const teamLeadRole = createdRoles.find(r => r.name === 'TEAM_LEAD');
     if (teamLeadRole) {
       createdPermissions.forEach(permission => {
@@ -261,11 +282,14 @@ async function seed() {
       });
     }
 
-    // DEVELOPER gets only daily update permissions
+    // DEVELOPER gets only basic daily update permissions (VIEW_DAILY_UPDATES, not VIEW_DAILY_UPDATES_FULL)
     const developerRole = createdRoles.find(r => r.name === 'DEVELOPER');
     if (developerRole) {
       const dailyUpdatePermissions = createdPermissions.filter(p =>
-        p.name.includes('DAILY_UPDATES') || p.name.includes('CREATE') || p.name.includes('UPDATE') || p.name.includes('DELETE')
+        (p.name.includes('DAILY_UPDATES') && !p.name.includes('FULL')) ||
+        p.name.includes('CREATE') ||
+        p.name.includes('UPDATE') ||
+        p.name.includes('DELETE')
       );
       dailyUpdatePermissions.forEach(permission => {
         rolePermissionsData.push({
@@ -383,8 +407,19 @@ async function seed() {
     console.log('Email: [user-email] / Password: password123');
     console.log('');
     console.log('📊 Permission Structure:');
-    console.log('- Manager & Team Lead: All permissions (including VIEW_DAILY_UPDATES_FULL)');
-    console.log('- Developers: Only daily update permissions (VIEW_DAILY_UPDATES)');
+    console.log('- Bala (Manager): All permissions (including VIEW_DAILY_UPDATES_FULL)');
+    console.log('- Ashok (Team Lead): All permissions (including VIEW_DAILY_UPDATES_FULL)');
+    console.log('- Developers: Only basic daily update permissions (VIEW_DAILY_UPDATES - own updates only)');
+    console.log('');
+    console.log('🔍 Daily Update Access:');
+    console.log('- VIEW_DAILY_UPDATES_FULL: Can see all updates across the project');
+    console.log('- VIEW_DAILY_UPDATES: Can only see their own updates');
+    console.log('');
+    console.log('🧪 Test the Permission Logic:');
+    console.log('1. Login as Bala (Manager) - should see all updates');
+    console.log('2. Login as Shyaam (Developer) - should only see own updates');
+    console.log('3. Try filtering by userId - Managers can, Developers cannot');
+    console.log('4. Check logs for permission decision details');
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);

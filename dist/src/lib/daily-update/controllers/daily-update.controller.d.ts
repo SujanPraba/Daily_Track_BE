@@ -4,6 +4,7 @@ import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
 import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
 import { SearchDailyUpdatesDto, TimeTrackingDto } from '../dtos/search-daily-updates.dto';
 import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
+import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
 export declare class DailyUpdateController {
     private readonly dailyUpdateService;
     constructor(dailyUpdateService: DailyUpdateService);
@@ -157,6 +158,29 @@ export declare class DailyUpdateController {
             name: string;
             description: string | null;
         } | null;
+    }>;
+    testSearchPermissions(req: any): Promise<{
+        currentUserId: any;
+        permissions: {
+            VIEW_DAILY_UPDATES_FULL: boolean;
+            VIEW_DAILY_UPDATES: boolean;
+        };
+        userProjectIds: string[];
+        searchCriteria: {
+            page: number;
+            limit: number;
+        };
+        searchResult: {
+            totalResults: number;
+            totalPages: number;
+            currentPage: number;
+            resultsCount: number;
+            sampleResult: DailyUpdateWithTeamDto;
+        };
+        debugInfo: {
+            message: string;
+            expectedBehavior: string;
+        };
     }>;
     approve(id: string, approveDailyUpdateDto: ApproveDailyUpdateDto): Promise<{
         date: Date;
