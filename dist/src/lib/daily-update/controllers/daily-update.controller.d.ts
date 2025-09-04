@@ -5,17 +5,18 @@ import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
 import { SearchDailyUpdatesDto, TimeTrackingDto } from '../dtos/search-daily-updates.dto';
 import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
 import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
+import { ZohoSyncDailyUpdateDto, ZohoSyncResponseDto } from '../dtos/zoho-sync-daily-update.dto';
 export declare class DailyUpdateController {
     private readonly dailyUpdateService;
     constructor(dailyUpdateService: DailyUpdateService);
     create(createDailyUpdateDto: CreateDailyUpdateDto): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -30,15 +31,16 @@ export declare class DailyUpdateController {
         approvedAt: Date | null;
         approvedBy: string | null;
     }>;
+    createWithZohoSync(zohoSyncDto: ZohoSyncDailyUpdateDto): Promise<ZohoSyncResponseDto>;
     searchDailyUpdates(searchDto: SearchDailyUpdatesDto, req: any): Promise<PaginatedDailyUpdatesDto>;
     findAll(req: any): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -56,11 +58,11 @@ export declare class DailyUpdateController {
     findOne(id: string): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -83,11 +85,11 @@ export declare class DailyUpdateController {
     update(id: string, updateDailyUpdateDto: UpdateDailyUpdateDto): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -106,11 +108,11 @@ export declare class DailyUpdateController {
     submit(id: string): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -134,11 +136,11 @@ export declare class DailyUpdateController {
         sampleDailyUpdate: {
             date: Date;
             id: string;
+            status: string | null;
             createdAt: Date | null;
             updatedAt: Date | null;
-            userId: string;
-            status: string | null;
             projectId: string;
+            userId: string;
             teamId: string | null;
             tickets: string | null;
             ticketsHours: string | null;
@@ -185,11 +187,11 @@ export declare class DailyUpdateController {
     approve(id: string, approveDailyUpdateDto: ApproveDailyUpdateDto): Promise<{
         date: Date;
         id: string;
+        status: string | null;
         createdAt: Date | null;
         updatedAt: Date | null;
-        userId: string;
-        status: string | null;
         projectId: string;
+        userId: string;
         teamId: string | null;
         tickets: string | null;
         ticketsHours: string | null;
@@ -204,4 +206,10 @@ export declare class DailyUpdateController {
         approvedAt: Date | null;
         approvedBy: string | null;
     }>;
+    testZohoConnection(): Promise<{
+        success: boolean;
+        message: string;
+        details?: any;
+    }>;
+    getZohoActivityTypes(): Promise<string[]>;
 }

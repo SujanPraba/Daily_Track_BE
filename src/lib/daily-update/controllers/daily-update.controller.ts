@@ -18,6 +18,7 @@ import { ApproveDailyUpdateDto } from '../dtos/approve-daily-update.dto';
 import { SearchDailyUpdatesDto, TimeTrackingDto, TimeTrackingResponseDto } from '../dtos/search-daily-updates.dto';
 import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
 import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
+import { ZohoSyncDailyUpdateDto, ZohoSyncResponseDto } from '../dtos/zoho-sync-daily-update.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @ApiTags('Daily Updates')
@@ -32,6 +33,35 @@ export class DailyUpdateController {
   @Post()
   create(@Body() createDailyUpdateDto: CreateDailyUpdateDto) {
     return this.dailyUpdateService.create(createDailyUpdateDto);
+  }
+
+  @ApiOperation({ 
+    summary: 'Create daily update with automatic Zoho People sync',
+    description: `
+    Create a daily update and automatically sync it to Zoho People for log time tracking.
+    
+    **Features:**
+    - Creates daily update in the system
+    - Automatically syncs to Zoho People if syncToZoho is true
+    - Supports detailed log time entries or automatic breakdown
+    - Handles Zoho authentication and API calls
+    - Returns detailed sync status and results
+    
+    **Zoho Integration:**
+    - Maps time entries to Zoho log time entries
+    - Supports draft mode for Zoho entries
+    - Handles multiple activity types and tickets
+    - Provides fallback IDs for Zoho user/project mapping
+    `
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Daily update created and synced to Zoho People successfully',
+    type: ZohoSyncResponseDto
+  })
+  @Post('zoho-sync')
+  createWithZohoSync(@Body() zohoSyncDto: ZohoSyncDailyUpdateDto) {
+    return this.dailyUpdateService.createWithZohoSync(zohoSyncDto);
   }
 
   @ApiOperation({
@@ -249,5 +279,43 @@ export class DailyUpdateController {
   @Post(':id/approve')
   approve(@Param('id') id: string, @Body() approveDailyUpdateDto: ApproveDailyUpdateDto) {
     return this.dailyUpdateService.approve(id, approveDailyUpdateDto.approverId);
+  }
+
+  @ApiOperation({ 
+    summary: 'Test Zoho People API connection',
+    description: 'Test the connection to Zoho People API and verify authentication'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Connection test result',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        details: { type: 'object' }
+      }
+    }
+  })
+  @Get('zoho/test-connection')
+  async testZohoConnection() {
+    return this.dailyUpdateService.testZohoConnection();
+  }
+
+  @ApiOperation({ 
+    summary: 'Get available Zoho People activity types',
+    description: 'Retrieve list of available activity types from Zoho People for log time entries'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'List of activity types',
+    schema: {
+      type: 'array',
+      items: { type: 'string' }
+    }
+  })
+  @Get('zoho/activity-types')
+  async getZohoActivityTypes() {
+    return this.dailyUpdateService.getZohoActivityTypes();
   }
 }

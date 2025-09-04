@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DailyUpdateRepository } from '../repositories/daily-update.repository';
 import { UserService } from '../../user/services/user.service';
 import { ProjectService } from '../../project/services/project.service';
+import { DailyUpdate, NewDailyUpdate } from '../../../database/schemas/daily-update.schema';
 import { CreateDailyUpdateDto } from '../dtos/create-daily-update.dto';
 import { UpdateDailyUpdateDto } from '../dtos/update-daily-update.dto';
 import { SearchDailyUpdatesDto } from '../dtos/search-daily-updates.dto';
 import { PaginatedDailyUpdatesDto } from '../dtos/paginated-daily-updates.dto';
 import { DailyUpdateWithTeamDto } from '../dtos/daily-update-with-team.dto';
-import { DailyUpdate } from '../../../database/schemas/daily-update.schema';
+import { ZohoSyncDailyUpdateDto, ZohoSyncResponseDto } from '../dtos/zoho-sync-daily-update.dto';
+import { ZohoPeopleService } from './zoho-people.service';
 
 @Injectable()
 export class DailyUpdateService {
@@ -15,6 +17,7 @@ export class DailyUpdateService {
     private readonly dailyUpdateRepository: DailyUpdateRepository,
     private readonly userService: UserService,
     private readonly projectService: ProjectService,
+    private readonly zohoPeopleService: ZohoPeopleService,
   ) {}
 
   async create(createDailyUpdateDto: CreateDailyUpdateDto): Promise<DailyUpdate> {
@@ -360,6 +363,249 @@ export class DailyUpdateService {
   async getTeamByProject(projectId: string): Promise<{ id: string; name: string; description: string | null } | null> {
     const result = await this.dailyUpdateRepository.getTeamByProject(projectId);
     return result;
+  }
+
+  /**
+   * Create daily update with automatic Zoho People sync
+   */
+  async createWithZohoSync(zohoSyncDto: ZohoSyncDailyUpdateDto): Promise<ZohoSyncResponseDto> {
+    try {
+      console.log(`🚀 Creating daily update with Zoho sync for user: ${zohoSyncDto.userId}`);
+      
+      // Validate user exists and has access to the project
+      const user = await this.userService.findOne(zohoSyncDto.userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${zohoSyncDto.userId} not found`);
+      }
+
+      // Validate project exists
+      const project = await this.projectService.findOne(zohoSyncDto.projectId);
+      if (!project) {
+        throw new NotFoundException(`Project with ID ${zohoSyncDto.projectId} not found`);
+      }
+
+      // Calculate total hours
+      const totalHours = this.calculateTotalHours(zohoSyncDto);
+
+      // Create the daily update
+      const dailyUpdateData: NewDailyUpdate = {
+        userId: zohoSyncDto.userId,
+        projectId: zohoSyncDto.projectId,
+        teamId: zohoSyncDto.teamId,
+        date: new Date(zohoSyncDto.date),
+        tickets: zohoSyncDto.tickets,
+        ticketsHours: zohoSyncDto.ticketsHours,
+        internalMeetingHours: zohoSyncDto.internalMeetingHours,
+        externalMeetingHours: zohoSyncDto.externalMeetingHours,
+        otherActivities: zohoSyncDto.otherActivities,
+        otherActivityHours: zohoSyncDto.otherActivityHours,
+        leavePermissionHours: zohoSyncDto.leavePermissionHours,
+        totalHours: totalHours.toString(),
+        notes: zohoSyncDto.notes,
+        status: 'DRAFT',
+        submittedAt: null,
+        approvedAt: null,
+        approvedBy: null,
+      };
+
+      const createdDailyUpdate = await this.dailyUpdateRepository.create(dailyUpdateData);
+      console.log(`✅ Daily update created with ID: ${createdDailyUpdate.id}`);
+
+      // Initialize sync response
+      const syncResponse: ZohoSyncResponseDto = {
+        id: createdDailyUpdate.id,
+        message: 'Daily update created successfully',
+        success: true,
+        createdAt: createdDailyUpdate.createdAt?.toISOString() || new Date().toISOString(),
+        zohoSyncDetails: {
+          synced: false,
+          zohoEntries: 0,
+          errors: [],
+        },
+      };
+
+      // Sync to Zoho People if requested
+      if (zohoSyncDto.syncToZoho) {
+        try {
+          console.log(`🔄 Starting Zoho People sync for daily update: ${createdDailyUpdate.id}`);
+          
+          let zohoUserId = zohoSyncDto.zohoUserId;
+          let zohoProjectId = zohoSyncDto.zohoProjectId;
+
+          // If Zoho IDs not provided, try to get them from user/project mappings
+          if (!zohoUserId) {
+            // You might want to store Zoho user ID mappings in your database
+            zohoUserId = user.employeeId || user.id; // Fallback to employee ID or user ID
+            console.log(`⚠️ Using fallback Zoho user ID: ${zohoUserId}`);
+          }
+
+          if (!zohoProjectId) {
+            // You might want to store Zoho project ID mappings in your database
+            zohoProjectId = project.code || project.id; // Fallback to project code or ID
+            console.log(`⚠️ Using fallback Zoho project ID: ${zohoProjectId}`);
+          }
+
+          // Prepare log time entries for Zoho
+          const logTimeEntries = this.prepareZohoLogTimeEntries(zohoSyncDto, totalHours);
+
+          if (logTimeEntries.length > 0) {
+            // Sync to Zoho People
+            const zohoSyncResult = await this.zohoPeopleService.createMultipleLogTimeEntries(
+              zohoUserId,
+              zohoProjectId,
+              zohoSyncDto.date,
+              logTimeEntries,
+              zohoSyncDto.zohoDraft || false
+            );
+
+            // Update sync response with Zoho results
+            syncResponse.zohoSyncDetails = {
+              synced: zohoSyncResult.success,
+              zohoEntries: zohoSyncResult.entries,
+              errors: zohoSyncResult.errors,
+              zohoResponse: zohoSyncResult.responses,
+            };
+
+            if (zohoSyncResult.success) {
+              syncResponse.message = `Daily update created and synced to Zoho People successfully. ${zohoSyncResult.entries} log time entries created.`;
+              console.log(`✅ Zoho sync completed successfully: ${zohoSyncResult.entries} entries`);
+            } else {
+              syncResponse.message = `Daily update created but Zoho sync had ${zohoSyncResult.errors.length} errors.`;
+              console.log(`⚠️ Zoho sync completed with errors: ${zohoSyncResult.errors.length} errors`);
+            }
+          } else {
+            syncResponse.message = 'Daily update created but no log time entries to sync to Zoho.';
+            syncResponse.zohoSyncDetails = {
+              synced: true,
+              zohoEntries: 0,
+              errors: [],
+            };
+            console.log(`ℹ️ No log time entries to sync to Zoho`);
+          }
+        } catch (zohoError) {
+          console.error(`❌ Zoho sync failed:`, zohoError);
+          syncResponse.message = 'Daily update created but Zoho sync failed.';
+          syncResponse.zohoSyncDetails = {
+            synced: false,
+            zohoEntries: 0,
+            errors: [zohoError.message],
+          };
+        }
+      } else {
+        console.log(`ℹ️ Zoho sync not requested for this daily update`);
+      }
+
+      return syncResponse;
+    } catch (error) {
+      console.error(`❌ Failed to create daily update with Zoho sync:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate total hours from all time fields
+   */
+  private calculateTotalHours(dto: ZohoSyncDailyUpdateDto): number {
+    const ticketsHours = parseFloat(dto.ticketsHours || '0');
+    const internalHours = parseFloat(dto.internalMeetingHours || '0');
+    const externalHours = parseFloat(dto.externalMeetingHours || '0');
+    const otherHours = parseFloat(dto.otherActivityHours || '0');
+    const leaveHours = parseFloat(dto.leavePermissionHours || '0');
+
+    return ticketsHours + internalHours + externalHours + otherHours + leaveHours;
+  }
+
+  /**
+   * Prepare log time entries for Zoho People sync
+   */
+  private prepareZohoLogTimeEntries(dto: ZohoSyncDailyUpdateDto, totalHours: number): any[] {
+    const entries: any[] = [];
+
+    // If detailed log time entries are provided, use them
+    if (dto.zohoLogTimeEntries && dto.zohoLogTimeEntries.length > 0) {
+      return dto.zohoLogTimeEntries;
+    }
+
+    // Otherwise, create entries based on the time breakdown
+    if (dto.ticketsHours && parseFloat(dto.ticketsHours) > 0) {
+      entries.push({
+        ticketId: dto.tickets || 'GENERAL',
+        activityType: 'Development',
+        hours: parseFloat(dto.ticketsHours),
+        description: `Work on tickets: ${dto.tickets}`,
+        logDate: dto.date,
+      });
+    }
+
+    if (dto.internalMeetingHours && parseFloat(dto.internalMeetingHours) > 0) {
+      entries.push({
+        ticketId: 'INTERNAL_MEETING',
+        activityType: 'Meeting',
+        hours: parseFloat(dto.internalMeetingHours),
+        description: 'Internal team meetings',
+        logDate: dto.date,
+      });
+    }
+
+    if (dto.externalMeetingHours && parseFloat(dto.externalMeetingHours) > 0) {
+      entries.push({
+        ticketId: 'EXTERNAL_MEETING',
+        activityType: 'Meeting',
+        hours: parseFloat(dto.externalMeetingHours),
+        description: 'External client/stakeholder meetings',
+        logDate: dto.date,
+      });
+    }
+
+    if (dto.otherActivityHours && parseFloat(dto.otherActivityHours) > 0) {
+      entries.push({
+        ticketId: 'OTHER_ACTIVITIES',
+        activityType: 'Other',
+        hours: parseFloat(dto.otherActivityHours),
+        description: dto.otherActivities || 'Other activities',
+        logDate: dto.date,
+      });
+    }
+
+    if (dto.leavePermissionHours && parseFloat(dto.leavePermissionHours) > 0) {
+      entries.push({
+        ticketId: 'LEAVE_PERMISSION',
+        activityType: 'Leave',
+        hours: parseFloat(dto.leavePermissionHours),
+        description: 'Leave or permission time',
+        logDate: dto.date,
+      });
+    }
+
+    return entries;
+  }
+
+  /**
+   * Test Zoho People API connection
+   */
+  async testZohoConnection(): Promise<{ success: boolean; message: string; details?: any }> {
+    try {
+      return await this.zohoPeopleService.testConnection();
+    } catch (error) {
+      console.error('Zoho connection test failed:', error);
+      return {
+        success: false,
+        message: `Connection test failed: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Get available Zoho People activity types
+   */
+  async getZohoActivityTypes(): Promise<string[]> {
+    try {
+      return await this.zohoPeopleService.getActivityTypes();
+    } catch (error) {
+      console.error('Failed to get Zoho activity types:', error);
+      // Return default activity types if API call fails
+      return ['Development', 'Testing', 'Code Review', 'Documentation', 'Meeting', 'Support', 'Other'];
+    }
   }
 
   async approve(id: string, approverId: string): Promise<DailyUpdate> {

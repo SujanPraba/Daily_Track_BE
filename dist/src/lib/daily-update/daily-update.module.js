@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const daily_update_service_1 = require("./services/daily-update.service");
 const daily_update_controller_1 = require("./controllers/daily-update.controller");
 const daily_update_repository_1 = require("./repositories/daily-update.repository");
+const zoho_people_service_1 = require("./services/zoho-people.service");
 const user_module_1 = require("../user/user.module");
 const project_module_1 = require("../project/project.module");
 let DailyUpdateModule = class DailyUpdateModule {
@@ -19,9 +20,9 @@ exports.DailyUpdateModule = DailyUpdateModule;
 exports.DailyUpdateModule = DailyUpdateModule = __decorate([
     (0, common_1.Module)({
         imports: [user_module_1.UserModule, project_module_1.ProjectModule],
-        providers: [daily_update_service_1.DailyUpdateService, daily_update_repository_1.DailyUpdateRepository],
+        providers: [daily_update_service_1.DailyUpdateService, daily_update_repository_1.DailyUpdateRepository, zoho_people_service_1.ZohoPeopleService],
         controllers: [daily_update_controller_1.DailyUpdateController],
-        exports: [daily_update_service_1.DailyUpdateService, daily_update_repository_1.DailyUpdateRepository],
+        exports: [daily_update_service_1.DailyUpdateService, daily_update_repository_1.DailyUpdateRepository, zoho_people_service_1.ZohoPeopleService],
     })
 ], DailyUpdateModule);
 //# sourceMappingURL=daily-update.module.js.map
